@@ -233,7 +233,14 @@ export function RouteSummary({
         </Button>
 
         {/* État avant optimisation */}
-        {!solution && !isOptimizing && null}
+        {!solution && !isOptimizing && (
+          <div className="text-center py-8">
+            <p className="text-gray-600 text-sm mb-1">Prêt pour optimisation</p>
+            <p className="text-xs text-gray-500">
+              {spots.length} lieu{spots.length !== 1 ? 'x' : ''} • {vehicles.length} véhicule{vehicles.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+        )}
 
         {/* Résumé des tournées existantes */}
         {routes.length > 0 && !solution && (

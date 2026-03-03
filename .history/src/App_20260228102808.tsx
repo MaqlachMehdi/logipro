@@ -1,5 +1,4 @@
 import { useEffect, useReducer, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
 import { VolumeEstimator, FleetManager, RouteSummary, MapPlanner, ExportPanel, SpotManager, VehicleDetail, ExportDatabase } from './components';
 import type { Spot, Vehicle, Route, AppState, GearItem } from './types';
 import { Truck, AlertCircle } from 'lucide-react';
@@ -440,25 +439,12 @@ export default function App() {
               />
 
               <MapPlanner
-                accessToken={'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2x4b2Z6b2MwMDFwMnBvN2J6b2Z6b2MwIn0.1234567890abcdef'}
-                styleUrl={undefined}
+                accessToken={process.env.REACT_APP_MAPBOX_TOKEN || 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2x4b2Z6b2MwMDFwMnBvN2J6b2Z6b2MwIn0.1234567890abcdef'}
+                styleUrl={state.mapStyleUrl}
                 center={[2.3522, 48.8566]}
-                zoom={13}
+                zoom={11}
                 terrain={true}
-                theme={'light'}
-                onMapLoaded={(map) => {
-                  try {
-                    // Add depot marker and open its popup so it's visible
-                    const m = new mapboxgl.Marker({ color: 'red' })
-                      .setLngLat([DEPOT_SPOT.lon, DEPOT_SPOT.lat])
-                      .setPopup(new mapboxgl.Popup({ offset: 12 }).setText(DEPOT_SPOT.name || 'Dépôt'))
-                      .addTo(map);
-                    m.togglePopup();
-                    console.log('Map loaded — depot marker placed');
-                  } catch (e) {
-                    console.error('Failed to add depot marker', e);
-                  }
-                }}
+                theme={state.mapTheme || 'light'}
               />
             </div>
 

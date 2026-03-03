@@ -449,12 +449,29 @@ export default function App() {
                 onMapLoaded={(map) => {
                   try {
                     // Add depot marker and open its popup so it's visible
-                    const m = new mapboxgl.Marker({ color: 'red' })
+                    const depotMarker = new mapboxgl.Marker({ color: 'red' })
                       .setLngLat([DEPOT_SPOT.lon, DEPOT_SPOT.lat])
                       .setPopup(new mapboxgl.Popup({ offset: 12 }).setText(DEPOT_SPOT.name || 'Dépôt'))
                       .addTo(map);
-                    m.togglePopup();
-                    console.log('Map loaded — depot marker placed');
+                    depotMarker.togglePopup();
+
+                    // Add markers for all spots from state.spots
+                    try {
+                      state.spots.forEach((s) => {
+                        if (s && typeof s.lat === 'number' && typeof s.lon === 'number') {
+                          const isSelected = s.id === state.selectedSpotId;
+                          const marker = new mapboxgl.Marker({ color: isSelected ? 'blue' : 'gray' })
+                            .setLngLat([s.lon, s.lat])
+                            .setPopup(new mapboxgl.Popup({ offset: 12 }).setText(s.name || s.address || s.id))
+                            .addTo(map);
+                          if (isSelected) marker.togglePopup();
+                        }
+                      });
+                    } catch (inner) {
+                      console.error('Failed adding spot markers', inner);
+                    }
+
+                    console.log('Map loaded — depot and spots markers placed');
                   } catch (e) {
                     console.error('Failed to add depot marker', e);
                   }

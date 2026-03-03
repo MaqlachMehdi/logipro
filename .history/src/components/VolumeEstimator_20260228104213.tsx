@@ -16,6 +16,7 @@ interface VolumeEstimatorProps {
   onDeleteGear: (gearId: string) => Promise<void> | void;
 }
 
+const DEFAULT_CATEGORY_SUGGESTIONS = ['Percussion', 'Guitares', 'Claviers', 'Sonorisation', 'Accessoires'];
 const CUSTOM_CATEGORIES_KEY = 'regietour_custom_gear_categories';
 
 export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGear, onDeleteGear }: VolumeEstimatorProps) {
@@ -41,7 +42,6 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isAddMenuOpen]);
-  
   const [customCategories, setCustomCategories] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem(CUSTOM_CATEGORIES_KEY);
@@ -103,8 +103,6 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
       .concat(customCategories)
   )] as string[];
 
-  // Suggestions = uniquement les catégories existantes (plus aucune catégorie supprimée)
-  const categorySuggestions = categories;
 
   const handleAddGear = async () => {
     const name = newGearName.trim();
@@ -358,6 +356,61 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
             )}
           </div>
         ))}
+          </div>
+        ))}
+        {/* Bouton Ajouter une catégorie en bas */}
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-2 mt-4">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 w-full text-black bg-white border border-gray-300 rounded-full flex items-center justify-center gap-2 font-semibold shadow-sm"
+            onClick={() => {
+              setIsAddCategoryOpen((prev) => !prev);
+              setCategoryError('');
+            }}
+          >
+            <span className="text-black text-lg font-bold">+</span>
+            <span>Ajouter une catégorie</span>
+          </Button>
+          {isAddCategoryOpen && (
+            <div className="mt-2 space-y-2">
+              <div className="space-y-1">
+                <Label htmlFor="new-category-name" className="text-xs text-gray-600">Nom de la catégorie</Label>
+                <Input
+                  id="new-category-name"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Ex: Cuivres"
+                  className="h-8"
+                />
+              </div>
+
+              {categoryError && <p className="text-xs text-red-600">{categoryError}</p>}
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  className="h-8 !bg-white !hover:bg-gray-100 !text-black border border-gray-300"
+                  onClick={handleAddCategory}
+                >
+                  Créer
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8"
+                  onClick={() => {
+                    setIsAddCategoryOpen(false);
+                    setCategoryError('');
+                    setNewCategoryName('');
+                  }}
+                >
+                  Annuler
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

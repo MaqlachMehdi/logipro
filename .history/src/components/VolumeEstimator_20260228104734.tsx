@@ -16,6 +16,7 @@ interface VolumeEstimatorProps {
   onDeleteGear: (gearId: string) => Promise<void> | void;
 }
 
+const DEFAULT_CATEGORY_SUGGESTIONS = ['Percussion', 'Guitares', 'Claviers', 'Sonorisation', 'Accessoires'];
 const CUSTOM_CATEGORIES_KEY = 'regietour_custom_gear_categories';
 
 export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGear, onDeleteGear }: VolumeEstimatorProps) {
