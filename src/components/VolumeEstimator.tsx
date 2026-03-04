@@ -6,6 +6,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { ChevronDown, ChevronRight, Package, Trash2 } from 'lucide-react';
 import type { GearItem } from '../types';
+import { ActionButtons } from './ui/ActionButtons';
 
 interface VolumeEstimatorProps {
   selections: GearSelection[];
@@ -261,18 +262,14 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
         {categories.map((category: string) => (
           <div key={category} className="border border-gray-200 rounded-lg overflow-visible bg-gray-50">
             <div className="w-full px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors cursor-pointer">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-black hover:text-red-600 hover:bg-red-50 font-bold text-lg mr-2"
-                onClick={async () => {
+              <ActionButtons
+                onDelete={async () => {
                   setCustomCategories((prev) => prev.filter((c) => c !== category));
                   setOpenCategories((prev) => {
                     const next = new Set(prev);
                     next.delete(category);
                     return next;
                   });
-                  // Remove all gears in this category (DB + UI)
                   if (typeof onDeleteGear === 'function') {
                     const gearsToDelete = gears.filter((g) => g.category === category);
                     for (const gear of gearsToDelete) {
@@ -280,10 +277,8 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                     }
                   }
                 }}
-                aria-label={`Supprimer catégorie ${category}`}
-              >
-                X
-              </Button>
+                showDelete={true}
+              />
               <div className="flex items-center gap-2 min-w-0 flex-1" role="button" tabIndex={0}
                 onClick={() => toggleCategory(category)}
                 onKeyDown={(e) => {
@@ -318,7 +313,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-gray-500 hover:text-gray-900 hover:bg-blue-100"
+                            className="h-7 w-7 p-0 text-gray-500 hover:text-gray-900 hover:bg-blue-100 font-bold"
                             onClick={() => updateQuantity(gear.id, quantity - 1)}
                           >
                             -
@@ -333,20 +328,12 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 w-7 p-0 text-gray-500 hover:text-gray-900 hover:bg-blue-100"
+                            className="h-7 w-7 p-0 text-gray-500 hover:text-gray-900 hover:bg-blue-100 font-bold"
                             onClick={() => updateQuantity(gear.id, quantity + 1)}
                           >
                             +
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-black hover:text-red-600 hover:bg-red-50 font-bold text-lg"
-                            onClick={() => onDeleteGear(gear.id)}
-                            aria-label={`Supprimer ${gear.name}`}
-                          >
-                            X
-                          </Button>
+                          <ActionButtons onDelete={() => onDeleteGear(gear.id)} showDelete={true} />
                         </div>
                       </div>
                     );

@@ -108,13 +108,14 @@ export function FleetManager({ vehicles, onChange }: FleetManagerProps) {
                   className="bg-blue-50 rounded-lg p-4 border border-blue-500 space-y-3"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-gray-900">Modifier: {vehicle.name}</h4>
-                    <button
-                      onClick={() => editState.cancelEdit()}
-                      className="text-gray-500 hover:text-gray-700 text-lg"
-                    >
-                      ×
-                    </button>
+                    <h4 className="font-semibold text-gray-900">Modifier: {vehicle.plate}</h4>
+                    <ActionButtons
+                      onDelete={(e) => {
+                        e.stopPropagation();
+                        editState.cancelEdit();
+                      }}
+                      showDelete={true}
+                    />
                   </div>
 
                   <div>
@@ -172,7 +173,7 @@ export function FleetManager({ vehicles, onChange }: FleetManagerProps) {
                   <div className="flex gap-2 pt-2">
                     <Button
                       size="sm"
-                      className="flex-1 bg-black hover:bg-gray-900 !text-black"
+                      className="flex-1 bg-white hover:bg-gray-100 text-black"
                       onClick={() => editState.saveEdit(handleUpdate)}
                     >
                       Enregistrer
@@ -270,7 +271,7 @@ export function FleetManager({ vehicles, onChange }: FleetManagerProps) {
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 !text-black"
+                className="flex-1 bg-white hover:bg-gray-100 text-black"
                 onClick={handleAdd}
               >
                 Ajouter

@@ -217,7 +217,7 @@ export function RouteSummary({
         <Button
           onClick={handleOptimize}
           disabled={isOptimizing || !spots.length || !vehicles.length}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 !text-black"
+          className="w-full bg-white hover:bg-gray-100 text-black"
         >
           {isOptimizing ? (
             <>

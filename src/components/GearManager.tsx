@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { ActionButtons } from './ui/ActionButtons';
 
 interface Gear {
   id: string;
@@ -97,14 +98,7 @@ export function GearManager({ gearCatalog, onAddGear, onDeleteGear }: GearManage
                 className="flex items-center justify-between p-2 rounded bg-gray-50 border border-gray-200 hover:border-gray-300 transition-colors"
               >
                 <span className="text-sm text-gray-800">{gear.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-gray-500 hover:text-red-600"
-                  onClick={() => onDeleteGear(gear.id)}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
+                <ActionButtons onDelete={() => onDeleteGear(gear.id)} />
               </div>
             ))
           )}

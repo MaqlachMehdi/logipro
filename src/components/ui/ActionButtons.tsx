@@ -32,7 +32,7 @@ export function ActionButtons({ onEdit, onDelete, showDelete = true }: ActionBut
           type="button"
           title="Modifier"
         >
-          🔧
+          ⚙️
         </button>
       )}
       {showDelete && onDelete && (

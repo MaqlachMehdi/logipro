@@ -393,19 +393,29 @@ app.post('/api/optimize', (req, res) => {
   };
 
   // Déterminer le répertoire du script Python
-  const pythonScriptPath = path.join(__dirname, '..', 'src', 'components', 'tot.py');
+  const pythonScriptPath = path.join(__dirname, 'solver', 'tot.py');
 
   // Essayer 'python' d'abord, puis 'python3'
   let pythonProcess;
   try {
+    if (!fs.existsSync(pythonScriptPath)) {
+      throw new Error(`Solveur Python introuvable: ${pythonScriptPath}`);
+    }
     pythonProcess = spawn('python', [pythonScriptPath], {
-      cwd: path.join(__dirname, '..')
+      cwd: path.join(__dirname),
+      stdio: ['pipe', 'pipe', 'pipe']
     });
   } catch (err) {
-    console.warn('⚠️  Python pas trouvé, en essayant python3...');
-    pythonProcess = spawn('python3', [pythonScriptPath], {
-      cwd: path.join(__dirname, '..')
-    });
+    console.warn('⚠️  Python pas trouvé ou script manquant, en essayant python3...');
+    try {
+      pythonProcess = spawn('python3', [pythonScriptPath], {
+        cwd: path.join(__dirname),
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+    } catch (err2) {
+      console.error('❌ Impossible de démarrer le solveur Python:', err2);
+      return res.status(500).json({ success: false, error: 'Solveur Python indisponible' });
+    }
   }
 
   let stdout = '';
