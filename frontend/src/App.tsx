@@ -110,6 +110,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
 }
 
 /* --------------------- APP --------------------- */
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+async function geocodeAddress(address: string): Promise<{ lat: number; lon: number } | null> {
+  if (!address?.trim()) return null;
+  try {
+    const res = await fetch(`${API_URL}/api/geocode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: address.trim() }),
+    });
+    const data = await res.json();
+    if (typeof data.lat === 'number' && typeof data.lon === 'number') {
+      return { lat: data.lat, lon: data.lon };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, createInitialState);
   const [gears, setGears] = useState<GearItem[]>(GEAR_CATALOG);
@@ -125,9 +145,12 @@ export default function App() {
   };
 
   const handleAddSpot = async (spotInput: Omit<Spot, 'id' | 'gearSelections'>) => {
+    const coords = await geocodeAddress(spotInput.address);
     const newSpot: Spot = {
       id: `spot-${Date.now()}`,
       ...spotInput,
+      lat: coords?.lat ?? spotInput.lat,
+      lon: coords?.lon ?? spotInput.lon,
       gearSelections: [],
     };
     const nextSpots = [...state.spots, newSpot];
@@ -137,9 +160,16 @@ export default function App() {
   };
 
   const handleUpdateSpot = async (updatedSpot: Spot) => {
-    const nextSpots = state.spots.map((spot) =>
-      spot.id === updatedSpot.id ? updatedSpot : spot,
-    );
+    const originalSpot = state.spots.find((s) => s.id === updatedSpot.id);
+    const addressChanged = originalSpot?.address !== updatedSpot.address;
+
+    let spotToSave = { ...updatedSpot };
+    if (addressChanged) {
+      const coords = await geocodeAddress(updatedSpot.address);
+      if (coords) spotToSave = { ...spotToSave, ...coords };
+    }
+
+    const nextSpots = state.spots.map((s) => s.id === spotToSave.id ? spotToSave : s);
     dispatch({ type: 'SET_SPOTS', payload: nextSpots });
     await persistSpots(nextSpots);
   };
