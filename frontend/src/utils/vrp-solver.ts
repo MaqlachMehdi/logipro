@@ -39,114 +39,25 @@ export interface OptimizationResponse {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 /**
- * Convertit une heure (HH:MM) en minutes depuis minuit
- */
-function timeToMinutes(timeStr: string | undefined): number | null {
-  if (!timeStr) return null;
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-/**
- * Prépare les données pour l'optimisation
- */
-function prepareOptimizationData(
-  spots: Spot[],
-  vehicles: Vehicle[],
-  gears: GearItem[]
-) {
-  // Créer les lieux avec index EN COMMENÇANT À 1
-  // Le dépôt sera toujours à l'index 0
-  const lieux: any[] = [];
-  
-  // Ajouter d'abord le dépôt à l'index 0
-  const depot = spots.find(s => s.id === 'depot-permanent');
-  if (depot) {
-    lieux.push({
-      Id_Lieux: 0,
-      Nom: depot.name,
-      Adresse: depot.address,
-      lat: depot.lat,
-      lon: depot.lon,
-      Instruments: '',
-      HeureTot: timeToMinutes(depot.openingTime),
-      HeureTard: timeToMinutes(depot.closingTime) || 22 * 60
-      // Note: Pas de HeureConcert pour le dépôt
-    });
-  }
-  
-  // Ajouter les autres spots (concerts) à partir de l'index 1
-  let concertIdx = 1;
-  spots.forEach((spot) => {
-    if (spot.id !== 'depot-permanent') {
-      // Récupérer les instruments pour ce spot
-      const instruments = spot.gearSelections
-        .map(selection => {
-          const gear = gears.find(g => g.id === selection.gearId);
-          return gear ? Array(selection.quantity).fill(gear.name).join(', ') : '';
-        })
-        .filter(Boolean)
-        .join(', ');
-
-      lieux.push({
-        Id_Lieux: concertIdx,
-        Nom: spot.name,
-        Adresse: spot.address,
-        lat: spot.lat,
-        lon: spot.lon,
-        Instruments: instruments || '',
-        HeureTot: timeToMinutes(spot.openingTime),
-        HeureConcert: timeToMinutes(spot.concertTime),
-        HeureTard: timeToMinutes(spot.closingTime) || 22 * 60
-      });
-      concertIdx++;
-    }
-  });
-
-  // Instruments (sans doublons)
-  const instruments = Array.from(
-    new Map(gears.map(g => [g.name, { Nom: g.name, Volume: g.volume }])).values()
-  );
-
-  // Véhicules
-  const vehicules = vehicles.map((v, idx) => ({
-    Id_vehicules: idx + 1,
-    Nom: v.name,
-    Volume_dispo: v.capacity
-  }));
-
-  return { lieux, instruments, vehicules };
-}
-
-/**
  * Appelle le serveur d'optimisation
+ * Le backend lit directement la base de données — aucune donnée à envoyer
  */
 export async function callVRPSolver(
-  spots: Spot[],
-  vehicles: Vehicle[],
-  gears: GearItem[],
+  _spots: Spot[],       // conservé pour ne pas casser les appels existants
+  _vehicles: Vehicle[], // conservé pour ne pas casser les appels existants
+  _gears: GearItem[],   // conservé pour ne pas casser les appels existants
   config: string = 'equilibre'
 ): Promise<OptimizationResponse> {
   try {
-    if (!spots.length || !vehicles.length) {
-      throw new Error('Au moins 1 lieu et 1 véhicule requis');
-    }
+    console.log(`📤 Envoi de la demande d'optimisation (${config})...`);
+    console.log('ℹ️  Le backend lit les données depuis la base de données');
 
-    // Préparer les données
-    const data = prepareOptimizationData(spots, vehicles, gears);
-
-    console.log(`📤 Envoi de la demande d\'optimisation (${config})...`);
-
-    // Appeler l'API avec la configuration
-    const response = await fetch(`${API_BASE_URL}/api/optimize`, {
+    // Le backend construit lui-même le JSON depuis la DB
+    // On envoie uniquement la configuration
+    const response = await fetch(`${API_BASE_URL}/api/optimize/run`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...data,
-        config
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config }), // ✅ uniquement la config
     });
 
     if (!response.ok) {
@@ -182,11 +93,11 @@ export function convertSolutionToRoutes(solution: VRPSolution): Route[] {
       venueId: `venue-${stopIdx}`,
       type: stopIdx === 0 ? 'load-out' : 'load-in',
       time: `${Math.floor(solution.temps_total_min / vehicle.destinations.length * stopIdx / 60)}:00`,
-      volume: 0 // À calculer depuis les détails
+      volume: 0
     })),
     totalDistance: vehicle.distance_km,
-    totalVolume: 0, // À calculer
-    utilization: 0 // À calculer
+    totalVolume: 0,
+    utilization: 0
   }));
 }
 
