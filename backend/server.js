@@ -4,6 +4,8 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { DatabaseSync } = require('node:sqlite');
+const exportRoutes = require('./routes/exportRoutes');
+const geocodeRoutes = require('./routes/geocodeRoutes'); // ✅
 
 const app = express();
 const PORT = 5000;
@@ -12,6 +14,8 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb' }));
+app.use('/api/export', exportRoutes);
+app.use('/api/geocode', geocodeRoutes); // ✅
 
 // ========================================
 // BASE DE DONNÉES SQLITE
@@ -63,6 +67,17 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
+
+// ✅ Insérer le dépôt en base s'il n'existe pas encore
+const depotExists = db.prepare(`SELECT id FROM spots WHERE id = 'depot-permanent'`).get();
+if (!depotExists) {
+  db.prepare(`
+    INSERT INTO spots (id, name, address, lat, lon, opening_time, closing_time, concert_time, gear_selections_json)
+    VALUES ('depot-permanent', 'Dépôt', '32 allée du hêtre, 77340, Pontault-Combault, France',
+            48.7992, 2.6016, '08:00', '23:00', NULL, '[]')
+  `).run();
+  console.log('✓ Dépôt initialisé en base');
+}
 
 const selectVehiclesStmt = db.prepare(`
   SELECT id, name, type, capacity, color
@@ -253,8 +268,8 @@ app.put('/api/spots/sync', (req, res) => {
     typeof spot.id === 'string' &&
     typeof spot.name === 'string' &&
     typeof spot.address === 'string' &&
-    typeof spot.lat === 'number' &&
-    typeof spot.lon === 'number' &&
+    typeof spot.lat === 'number' &&   // ✅ 0 est un number valide
+    typeof spot.lon === 'number' &&   // ✅ 0 est un number valide
     typeof spot.openingTime === 'string' &&
     typeof spot.closingTime === 'string' &&
     Array.isArray(spot.gearSelections)
