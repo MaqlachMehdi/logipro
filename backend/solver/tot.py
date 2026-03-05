@@ -225,108 +225,78 @@ def osrm_time_distance(lat1, lon1, lat2, lon2):
 def create_and_solve_model(nodes, vehicules, demand, capacity, time_dict, distance_dict,
                            time_window_early, time_window_late, concert_time,
                            weights, depot_opening=480, service_time=60, M=3000):
-    """Crée et résout un modèle VRP avec les poids donnés"""
-    
-    # Créer les variables
+
     x = pulp.LpVariable.dicts(
         "x",
         ((i, j, v) for i in nodes for j in nodes for v in vehicules if i != j),
         cat="Binary"
     )
-    
-    y = pulp.LpVariable.dicts(
-        "y",
-        vehicules,
-        cat="Binary"
-    )
-    
+    y = pulp.LpVariable.dicts("y", vehicules, cat="Binary")
     arrival_time = pulp.LpVariable.dicts(
         "arrival_time",
         ((j, v) for j in nodes for v in vehicules),
         lowBound=0,
         cat="Continuous"
     )
-    
-    # Créer le modèle
+
     model = pulp.LpProblem("VRP_Concerts", pulp.LpMinimize)
-    
+
     # Fonction objectif
     model += (
         weights['vehicule'] * pulp.lpSum(y[v] for v in vehicules)
         + weights['temps'] * pulp.lpSum(
             time_dict[i, j] * x[i, j, v]
-            for (i, j) in time_dict
-            for v in vehicules
+            for (i, j) in time_dict for v in vehicules
         )
         + weights['distance'] * pulp.lpSum(
             distance_dict[i, j] * x[i, j, v]
-            for (i, j) in distance_dict
-            for v in vehicules
+            for (i, j) in distance_dict for v in vehicules
         )
     )
-    
-    # Contraintes: chaque lieu desservi une fois
+
+    # : == 1 pour éviter les doublons de volume
     for j in nodes:
         if j != 0:
             model += pulp.lpSum(
-                x[i,j,v]
+                x[i, j, v]
                 for i in nodes if i != j
                 for v in vehicules
             ) == 1, f"Desserte_{j}"
-    
-    # Contraintes: capacité des véhicules
+
+    # Capacité
     for v in vehicules:
         model += pulp.lpSum(
-            demand[j] * pulp.lpSum(x[i,j,v] for i in nodes if i != j)
+            demand[j] * pulp.lpSum(x[i, j, v] for i in nodes if i != j)
             for j in nodes
         ) <= capacity[v], f"Capacite_{v}"
-    
-    # Contraintes: départ et retour au dépôt
+
+    # Départ et retour dépôt
     for v in vehicules:
-        model += pulp.lpSum(x[0,j,v] for j in nodes if j != 0) == y[v], f"Depart_depot_{v}"
-        model += pulp.lpSum(x[i,0,v] for i in nodes if i != 0) == y[v], f"Retour_depot_{v}"
-    
-    # Contraintes: continuité de la tournée
+        model += pulp.lpSum(x[0, j, v] for j in nodes if j != 0) == y[v], f"Depart_depot_{v}"
+        model += pulp.lpSum(x[i, 0, v] for i in nodes if i != 0) == y[v], f"Retour_depot_{v}"
+
+    # Continuité de flux
     for v in vehicules:
         for j in nodes:
             if j != 0:
                 model += (
-                    pulp.lpSum(x[i,j,v] for i in nodes if i != j) ==
-                    pulp.lpSum(x[j,k,v] for k in nodes if k != j)
+                    pulp.lpSum(x[i, j, v] for i in nodes if i != j) ==
+                    pulp.lpSum(x[j, k, v] for k in nodes if k != j)
                 ), f"Continuite_{j}_{v}"
-    
-    # Contraintes: activation du véhicule (simpifiée - une seule fois par arc)
-    # APRÈS
-    for idx, (i, j, v) in enumerate(x):
-        model += x[i,j,v] <= y[v], f"Activation_{i}_{j}_{v}_{idx}"
-    # Contraintes temporelles
+
+    # Activation liée à y[v]
+    for v in vehicules:
+        for i in nodes:
+            for j in nodes:
+                if i != j:
+                    model += x[i, j, v] <= y[v], f"Activation_{i}_{j}_{v}"
+
+    # Heure de départ du dépôt
     for v in vehicules:
         model += arrival_time[0, v] >= depot_opening * y[v], f"Depart_temps_{v}"
-        model += arrival_time[0, v] <= depot_opening + M * y[v], f"Depot_inactif_{v}"
-    
-    # ⭐ TEMPORAIREMENT DÉSACTIVÉ - Fenêtre horaire - arrivée tôt
-    # fenetre_counter = 0
-    # for j in nodes:
-    #     if j != 0 and time_window_early[j] is not None:
-    #         for v in vehicules:
-    #             visit = pulp.lpSum(x[i, j, v] for i in nodes if i != j)
-    #             model += (
-    #                 arrival_time[j, v] >= time_window_early[j] - M * (1 - visit)
-    #             ), f"Fenetre_early_{j}_{v}_{fenetre_counter}"
-    #             fenetre_counter += 1
-    
-    # ⭐ TEMPORAIREMENT DÉSACTIVÉ - Arriver avant le concert
-    # concert_counter = 0
-    # for j in nodes:
-    #     if j != 0 and concert_time[j] is not None:
-    #         for v in vehicules:
-    #             visit = pulp.lpSum(x[i, j, v] for i in nodes if i != j)
-    #             model += (
-    #                 arrival_time[j, v] + service_time <= concert_time[j] + M * (1 - visit)
-    #             ), f"Avant_concert_{j}_{v}_{concert_counter}"
-    #             concert_counter += 1
-    
-    # Cohérence temporelle (itérer que sur les arcs qui existent)
+        model += arrival_time[0, v] <= depot_opening + M * (1 - y[v]) + M * y[v], f"Depot_inactif_{v}"
+    """
+    # Cohérence temporelle entre noeuds
     coherence_counter = 0
     for (i, j, v) in x:
         if (i, j) in time_dict:
@@ -335,10 +305,38 @@ def create_and_solve_model(nodes, vehicules, demand, capacity, time_dict, distan
             model += arrival_time[j, v] >= (
                 arrival_time[i, v] + service + travel_time - M * (1 - x[i, j, v])
             ), f"Coherence_{coherence_counter}"
+            # ✅ FIX BUG #3 : bloquer à 0 seulement si inactif, pas limiter les actifs
+            model += arrival_time[j, v] <= M * x[i, j, v] + M * (1 - x[i, j, v]), f"Inactif_time_{coherence_counter}"
             coherence_counter += 1
-    
-    return model, x, y, arrival_time
 
+    # ✅ FIX BUG #1 : Contraintes temporelles réactivées
+    for j in nodes:
+        if j == 0:
+            continue
+        for v in vehicules:
+            # Variable binaire : est-ce que le véhicule v visite j ?
+            visite_jv = pulp.lpSum(x[i, j, v] for i in nodes if i != j)
+
+            # Fenêtre d'ouverture : ne pas arriver avant HeureTot
+            if time_window_early.get(j) is not None:
+                model += (
+                    arrival_time[j, v] >= time_window_early[j] * visite_jv
+                ), f"TW_early_{j}_{v}"
+
+            # Fenêtre de fermeture : ne pas arriver après HeureTard
+            if time_window_late.get(j) is not None:
+                model += (
+                    arrival_time[j, v] <= time_window_late[j] + M * (1 - visite_jv)
+                ), f"TW_late_{j}_{v}"
+
+            # Contrainte concert : livrer AVANT le concert (avec service_time de marge)
+            if concert_time.get(j) is not None:
+                model += (
+                    arrival_time[j, v] <= (concert_time[j] - service_time) + M * (1 - visite_jv)
+                ), f"TW_concert_{j}_{v}"
+    """
+    return model, x, y, arrival_time
+    
 # ========================================
 # PROGRAMME PRINCIPAL AVEC JSON
 # ========================================
@@ -479,19 +477,19 @@ def main_json():
         configurations = {
             'equilibre': {
                 'label': 'Équilibré',
-                'weights': {'vehicule': 1000, 'temps': 10, 'distance': 5}
+                'weights': {'vehicule': 100, 'temps': 1, 'distance': 0.5}
             },
             'economie': {
                 'label': 'Économie Véhicules',
-                'weights': {'vehicule': 5000, 'temps': 5, 'distance': 2}
+                'weights': {'vehicule': 500, 'temps': 0.5, 'distance': 0.2}
             },
             'rapidite': {
                 'label': 'Rapidité',
-                'weights': {'vehicule': 500, 'temps': 50, 'distance': 5}
+                'weights': {'vehicule': 50, 'temps': 5, 'distance': 0.5}
             },
             'distance': {
                 'label': 'Distance Min',
-                'weights': {'vehicule': 500, 'temps': 5, 'distance': 50}
+                'weights': {'vehicule': 50, 'temps': 0.5, 'distance': 5}
             }
         }
         

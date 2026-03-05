@@ -596,9 +596,12 @@ app.post('/api/optimize/run', (req, res) => {
   console.log(`   - ${instruments.length} instruments dans le catalogue`);
   console.log(`   - ${vehicules.length} véhicules`);
 
+  // ✅ inputData déclaré AVANT le console.log qui l'utilise
   const selectedConfig = config || 'equilibre';
-
   const inputData = { lieux, instruments, vehicules, config: selectedConfig };
+
+  console.log('📋 JSON COMPLET ENVOYÉ AU SOLVEUR:');
+  console.log(JSON.stringify(inputData, null, 2));
 
   // 9. Lancer le solveur Python (même logique qu'avant)
   const pythonScriptPath = path.join(__dirname, 'solver', 'tot.py');
@@ -658,6 +661,73 @@ app.post('/api/optimize/run', (req, res) => {
     clearTimeout(timeout);
     return res.status(500).json({ success: false, error: `Erreur lancement solveur: ${err.message}` });
   });
+});
+
+/**
+ * GET /api/optimize/preview
+ * Retourne le JSON qui serait envoyé au solveur, SANS le lancer
+ * Utile pour déboguer
+ */
+app.get('/api/optimize/preview', (req, res) => {
+  try {
+    const spotRows = selectSpotsStmt.all();
+    const spots = spotRows.map(mapSpotRow);
+    const vehicleRows = selectVehiclesStmt.all();
+    const gears = selectGearsStmt.all();
+
+    const depot = spots.find((s) => s.id === 'depot-permanent');
+    if (!depot) {
+      return res.status(400).json({ success: false, error: 'Dépôt introuvable en base.' });
+    }
+
+    const concertSpots = spots.filter((s) => s.id !== 'depot-permanent');
+    const gearMap = {};
+    for (const g of gears) {
+      gearMap[g.id] = { name: g.name, volume: g.volume };
+    }
+
+    const toMinutes = (hhmm) => {
+      if (!hhmm) return null;
+      const [h, m] = hhmm.split(':').map(Number);
+      return h * 60 + (m || 0);
+    };
+
+    const allSpots = [depot, ...concertSpots];
+    const lieux = allSpots.map((spot, index) => {
+      const instrumentsList = [];
+      for (const sel of spot.gearSelections || []) {
+        const gear = gearMap[sel.gearId];
+        if (gear) {
+          for (let i = 0; i < sel.quantity; i++) {
+            instrumentsList.push(gear.name);
+          }
+        }
+      }
+      return {
+        Id_Lieux: index,
+        Nom: spot.name,
+        Adresse: spot.address,
+        lat: spot.lat,
+        lon: spot.lon,
+        HeureTot: toMinutes(spot.openingTime),
+        HeureTard: toMinutes(spot.closingTime),
+        HeureConcert: spot.concertTime ? toMinutes(spot.concertTime) : null,
+        Instruments: instrumentsList.join(', '),
+      };
+    });
+
+    const instruments = gears.map((g) => ({ Nom: g.name, Volume: g.volume }));
+    const vehicules = vehicleRows.map((v, index) => ({
+      Id_vehicules: index + 1,
+      Nom: v.name,
+      Volume_dispo: v.capacity,
+    }));
+
+    return res.json({ success: true, json: { lieux, instruments, vehicules } });
+
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 /**
