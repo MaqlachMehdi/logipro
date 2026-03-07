@@ -205,7 +205,7 @@ data_test = {
 }
 
 
-DEBUG = 1
+DEBUG = 0
 def osrm_time_distance(lat1, lon1, lat2, lon2)->tuple[float,int]:
     if DEBUG : 
         return 0,0
@@ -429,12 +429,12 @@ for (delivery_node,recovery_node) in zip(nodes_livraison,nodes_ramasse):
 
     # TIME WINDOWS
     node_data = lieux[node_id]
-    concert_start_time = node_data["HeureConcert"]
-    location_oppening  = node_data["HeureTot"]
-    location_closing  = node_data["HeureTard"]
-    time_to_install = node_data["TempsInstallation"]
-    time_to_uninstall = node_data["TempsDesinstallation"]
-    concert_duration = node_data["DureeConcert"]
+    concert_start_time  = node_data["HeureConcert"]
+    location_oppening   = node_data["HeureTot"]
+    location_closing    = node_data["HeureTard"]
+    time_to_install     = node_data["TempsInstallation"]
+    time_to_uninstall   = node_data["TempsDesinstallation"]
+    concert_duration    = node_data["DureeConcert"]
 
     delivery_time_window = TimeWindow(start_minutes=location_oppening,end_minutes=concert_start_time - time_to_install - MARGE_AVANT_CONCERT)
     recovery_time_window = TimeWindow(start_minutes=concert_start_time + concert_duration + MARGE_APRES_CONCERT,end_minutes= location_closing - time_to_uninstall - MARGE_FERMETURE)
@@ -528,6 +528,44 @@ def add_loss(
 
   return pulp_problem
 
+def add_constraints(pulp_problem:pulp.LpProblem, problem:Problem, choose_edges:dict[tuple[int,int,str],pulp.LpVariable])->pulp.LpProblem:
+  # Chaque lieu doit être livré exactement une fois (par un véhicule quelconque)
+  for delivery_node in problem.delivery_nodes:
+      pulp_problem += pulp.lpSum(choose_edges[delivery_node.id, node_end.id, vehicule.id] for node_end in problem.all_nodes for vehicule in problem.vehicules_dict.values() if node_end.id != delivery_node.id) == 1
+
+  # Chaque lieu doit être ramassé exactement une fois (par un véhicule quelconque)
+  for recovery_node in problem.recovery_node:
+      pulp_problem += pulp.lpSum(choose_edges[recovery_node.id, node_end.id, vehicule.id] for node_end in problem.all_nodes for vehicule in problem.vehicules_dict.values() if node_end.id != recovery_node.id) == 1
+
+  # Pour chaque noeud intermédiaire (hors dépôt) et chaque véhicule :
+  # nb d'arcs entrants == nb d'arcs sortants
+  for node in problem.delivery_nodes + problem.recovery_node:
+      for vehicule in problem.vehicules_dict.values():
+          pulp_problem += (
+              pulp.lpSum(choose_edges[node_start.id, node.id, vehicule.id] for node_start in problem.all_nodes if node_start.id != node.id)   # arcs entrants
+              ==
+              pulp.lpSum(choose_edges[node.id, node_end.id, vehicule.id] for node_end in problem.all_nodes if node_end.id != node.id)   # arcs sortants
+          )
+  
+  id_depot = problem.deposit_node.id 
+
+  # # Chaque véhicule part au plus une fois du dépôt
+  # for vehicule in problem.vehicules_dict.values():
+  #     pulp_problem += pulp.lpSum(choose_edges[id_depot, node_end.id, vehicule.id] for node_end in problem.all_nodes if node_end.id != id_depot) <= 1
+
+  # # Chaque véhicule revient au plus une fois au dépôt
+  # for vehicule in problem.vehicules_dict.values():
+  #     pulp_problem += pulp.lpSum(choose_edges[node_start.id, id_depot, vehicule.id] for node_start in problem.all_nodes if node_start.id != id_depot) <= 1
+
+  # # Cohérence : nb de départs = nb de retours (si part, revient)
+  # for vehicule in problem.vehicules_dict.values():
+  #     pulp_problem += (
+  #         pulp.lpSum(choose_edges[id_depot, node_end.id, vehicule.id] for node_end in problem.all_nodes if node_end.id != id_depot)
+  #         ==
+  #         pulp.lpSum(choose_edges[node_start.id, id_depot, vehicule.id] for node_start in problem.all_nodes if node_start.id != id_depot)
+  #     )
+  return pulp_problem
+
 # x[v,w,k] = 1 si le véhicule v va de w à k, 0 sinon
 def build_pulp_problem(problem:Problem)->pulp.LpProblem:
   choose_edges = pulp.LpVariable.dicts(
@@ -551,12 +589,14 @@ def build_pulp_problem(problem:Problem)->pulp.LpProblem:
   pulp_problem =  pulp.LpProblem(problem.name , pulp.LpMinimize)
 
   pulp_problem = add_loss(pulp_problem, problem, choose_edges)
+  pulp_problem = add_constraints(pulp_problem, problem, choose_edges)
 
   return pulp_problem
 
 
 
 pulp_problem = build_pulp_problem(problem)
+
 pulp_problem.solve()
 
 # OSEF POUR L'INSTANT MAIS ON POURRAIT AVOIR BESOIN DE VARIABLES D'ATTENTE POUR MODÉLISER LES PÉNALITÉS D'ARRIVÉE TROP TÔT
