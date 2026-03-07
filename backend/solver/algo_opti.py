@@ -226,6 +226,7 @@ def time_to_minutes(t):
         return t.hour * 60 + t.minute
     return None
 
+
 # ========================================
 # Chargement des données depuis data_test
 # ========================================
