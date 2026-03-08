@@ -6,73 +6,129 @@
   <title>VRPPD Solution</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; background: #f0f0f0; }
-    #map { width: 100vw; height: 100vh; }
-
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:system-ui,sans-serif; background:#f0f0f0; }
+    #map { width:100vw; height:100vh; }
     #legend {
-      position: absolute; top: 80px; right: 12px; z-index: 1000;
-      background: white; border-radius: 10px; padding: 14px 18px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.25); max-width: 310px;
-      max-height: calc(100vh - 120px); overflow-y: auto;
+      position:absolute; top:80px; right:12px; z-index:1000;
+      background:white; border-radius:10px; padding:14px 18px;
+      box-shadow:0 3px 12px rgba(0,0,0,.25); max-width:310px;
+      max-height:calc(100vh - 120px); overflow-y:auto;
     }
-    #legend h3 { font-size: 14px; color: #333; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 6px; }
-    .legend-item { display: flex; align-items: flex-start; margin-bottom: 10px; gap: 10px; font-size: 12px; }
-    .swatch { flex-shrink: 0; width: 22px; height: 5px; border-radius: 3px; margin-top: 6px; }
-    .route-seq { color: #888; word-break: break-word; }
-
-    .node-legend { border-top: 1px solid #eee; margin-top: 8px; padding-top: 8px; }
-    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
-
+    #legend h3 { font-size:14px; color:#333; margin-bottom:10px;
+                  border-bottom:1px solid #eee; padding-bottom:6px; }
+    .legend-item { display:flex; align-items:flex-start; margin-bottom:10px;
+                    gap:10px; font-size:12px; }
+    .swatch { flex-shrink:0; width:22px; height:5px; border-radius:3px; margin-top:6px; }
+    .route-seq { color:#888; word-break:break-word; }
+    .node-legend { border-top:1px solid #eee; margin-top:8px; padding-top:8px; }
+    .dot { display:inline-block; width:12px; height:12px; border-radius:50%;
+            margin-right:6px; vertical-align:middle; }
     #stats {
-      position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
-      z-index: 1000; background: white; border-radius: 8px; padding: 8px 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-size: 13px; white-space: nowrap;
+      position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+      z-index:1000; background:white; border-radius:8px; padding:8px 20px;
+      box-shadow:0 2px 10px rgba(0,0,0,.2); font-size:13px; white-space:nowrap;
     }
-
     .route-tooltip {
-      background: rgba(30,30,30,0.85); color: white;
-      border: none; border-radius: 4px; font-size: 12px; padding: 4px 8px;
+      background:rgba(30,30,30,.85); color:white;
+      border:none; border-radius:4px; font-size:12px; padding:4px 8px;
     }
-    .leaflet-tooltip-top.route-tooltip::before { border-top-color: rgba(30,30,30,0.85); }
+    .leaflet-tooltip-top.route-tooltip::before { border-top-color:rgba(30,30,30,.85); }
   </style>
 </head>
 <body>
-  <div id="map"></div>
+<div id="map"></div>
 
-  <div id="legend">
-    <h3>Vehicles &amp; Routes</h3>
-    <i style="font-size:12px;color:#999">No active routes found.</i>
-    <div class="node-legend">
-      <h3 style="margin-top:6px">Node types</h3>
-      <div style="font-size:12px;line-height:2">
-        <span class="dot" style="background:#333;border:2px solid #fff;box-shadow:0 0 0 1px #333"></span>Depot<br>
-        <span class="dot" style="background:#1a7abf"></span>Delivery — drop-off before concert<br>
-        <span class="dot" style="background:#c0392b"></span>Recovery — pick-up after concert
-      </div>
+<div id="legend">
+  <h3>Vehicles &amp; Routes</h3>
+  <div class="legend-item"><span class="swatch" style="background:#984ea3"></span><div><b>PL-321-KK</b>&nbsp;<small style="color:#666">cap. 18 m³ · 5 stops</small><br><small class="route-seq">Depot → Cirque — Delivery → Casa — Delivery → Casa — Recovery → Cirque — Recovery → Depot</small></div></div><div class="legend-item"><span class="swatch" style="background:#4daf4a"></span><div><b>TR-789-XX</b>&nbsp;<small style="color:#666">cap. 28 m³ · 3 stops</small><br><small class="route-seq">Depot → Hotel — Delivery → Hotel — Recovery → Depot</small></div></div>
+  <div class="node-legend">
+    <h3 style="margin-top:6px">Node types</h3>
+    <div style="font-size:12px;line-height:2">
+      <span class="dot" style="background:#333;border:2px solid #fff;box-shadow:0 0 0 1px #333"></span>Depot<br>
+      <span class="dot" style="background:#1a7abf"></span>Delivery — drop-off before concert<br>
+      <span class="dot" style="background:#c0392b"></span>Recovery — pick-up after concert
     </div>
   </div>
+</div>
 
-  <div id="stats"><b>Status:</b> Infeasible&emsp;<b>Objective:</b> 0.000&emsp;<b>Active vehicles:</b> 0 / 4</div>
+<div id="stats"><b>Status:</b> Optimal&emsp;<b>Objective:</b> 38.342&emsp;<b>Active vehicles:</b> 2 / 4</div>
 
-  <script>
-    var map = L.map('map').setView([48.8313895, 2.2905805857142854], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+<script>
+  // ── Map init ──────────────────────────────────────────────────────────────
+  var map = L.map('map').setView([48.8313895, 2.2905805857142854], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
 
-    // ── Routes ──────────────────────────────────────────────────────────────
-        
+  // ── Quadratic Bézier helper ───────────────────────────────────────────────
+  // Returns nPts+1 [lat,lon] points along the arc between p1 and p2.
+  // The control point is offset perpendicularly by `curv` degrees.
+  function bezierPoints(p1, p2, curv, nPts) {
+    var midLat = (p1[0] + p2[0]) / 2;
+    var midLon = (p1[1] + p2[1]) / 2;
+    var dLat   = p2[0] - p1[0];
+    var dLon   = p2[1] - p1[1];
+    var len    = Math.sqrt(dLat * dLat + dLon * dLon);
+    if (len < 1e-10) return [p1, p2];
+    // perpendicular unit vector scaled by curvature
+    var ctrlLat = midLat + (-dLon / len) * curv;
+    var ctrlLon = midLon + ( dLat / len) * curv;
+    var pts = [];
+    for (var i = 0; i <= nPts; i++) {
+      var u = i / nPts;
+      var v = 1 - u;
+      pts.push([
+        v*v*p1[0] + 2*v*u*ctrlLat + u*u*p2[0],
+        v*v*p1[1] + 2*v*u*ctrlLon + u*u*p2[1]
+      ]);
+    }
+    return pts;
+  }
 
-    // ── Node markers ────────────────────────────────────────────────────────
-        L.circleMarker([48.8584265, 2.2959641000000004], {radius: 10, color: "#7f0000", weight: 2, fillColor: "#c0392b", fillOpacity: 0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Depot \u2014 Recovery</b><br><i style='color:#666'>Av. Gustave Eiffel, 75007 Paris</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 08h00 \u2013 23h00<br><b>Volume:</b> \u2014<br><b>GPS:</b> 48.85843, 2.29596</div>").addTo(map);
-        L.circleMarker([48.811600000000006, 2.2619000000000002], {radius: 10, color: "#7f0000", weight: 2, fillColor: "#c0392b", fillOpacity: 0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Cirque \u2014 Recovery</b><br><i style='color:#666'>110 Rue Amelot, 75011 Paris</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 08h00 \u2013 16h35<br><b>Volume:</b> +7.05 m\u00b3<br><b>GPS:</b> 48.81160, 2.26190</div>").addTo(map);
-        L.circleMarker([48.8688, 2.3763], {radius: 10, color: "#7f0000", weight: 2, fillColor: "#c0392b", fillOpacity: 0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Hotel \u2014 Recovery</b><br><i style='color:#666'>Pl. Gerard Willaume, 77600 Chanteloup-en-Brie</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 08h00 \u2013 17h05<br><b>Volume:</b> +3.60 m\u00b3<br><b>GPS:</b> 48.86880, 2.37630</div>").addTo(map);
-        L.circleMarker([48.801300000000005, 2.2319], {radius: 10, color: "#7f0000", weight: 2, fillColor: "#c0392b", fillOpacity: 0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Casa \u2014 Recovery</b><br><i style='color:#666'>32 allee du hetre, pontault-combault 77340</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 08h00 \u2013 16h55<br><b>Volume:</b> +5.42 m\u00b3<br><b>GPS:</b> 48.80130, 2.23190</div>").addTo(map);
-        L.circleMarker([48.811600000000006, 2.2619000000000002], {radius: 10, color: "#7f0000", weight: 2, fillColor: "#c0392b", fillOpacity: 0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Cirque \u2014 Recovery</b><br><i style='color:#666'>110 Rue Amelot, 75011 Paris</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 20h00 \u2013 21h40<br><b>Volume:</b> -7.05 m\u00b3<br><b>GPS:</b> 48.81160, 2.26190</div>").addTo(map);
-        L.circleMarker([48.8688, 2.3763], {radius: 10, color: "#7f0000", weight: 2, fillColor: "#c0392b", fillOpacity: 0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Hotel \u2014 Recovery</b><br><i style='color:#666'>Pl. Gerard Willaume, 77600 Chanteloup-en-Brie</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 19h20 \u2013 22h00<br><b>Volume:</b> -3.60 m\u00b3<br><b>GPS:</b> 48.86880, 2.37630</div>").addTo(map);
-        L.circleMarker([48.801300000000005, 2.2319], {radius: 10, color: "#7f0000", weight: 2, fillColor: "#c0392b", fillOpacity: 0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Casa \u2014 Recovery</b><br><i style='color:#666'>32 allee du hetre, pontault-combault 77340</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 19h40 \u2013 21h50<br><b>Volume:</b> -5.42 m\u00b3<br><b>GPS:</b> 48.80130, 2.23190</div>").addTo(map);
-  </script>
+  // ── Draw routes ───────────────────────────────────────────────────────────
+  var vehicleRoutes = [{"plate":"PL-321-KK","color":"#984ea3","curvature":0.003,"tooltip":"PL-321-KK  (18\u202fm\u00b3 cap.)","segments":[[[48.8581265,2.2956641],[48.8113,2.2616]],[[48.8113,2.2616],[48.801,2.2316]],[[48.801,2.2316],[48.801300000000005,2.2319]],[[48.801300000000005,2.2319],[48.811600000000006,2.2619000000000002]],[[48.811600000000006,2.2619000000000002],[48.8581265,2.2956641]]]},{"plate":"TR-789-XX","color":"#4daf4a","curvature":-0.003,"tooltip":"TR-789-XX  (28\u202fm\u00b3 cap.)","segments":[[[48.8581265,2.2956641],[48.8685,2.376]],[[48.8685,2.376],[48.8688,2.3763]],[[48.8688,2.3763],[48.8581265,2.2956641]]]}];
+
+  vehicleRoutes.forEach(function(route) {
+    route.segments.forEach(function(seg) {
+      var pts  = bezierPoints(seg[0], seg[1], route.curvature, 48);
+      var line = L.polyline(pts, {
+        color:   route.color,
+        weight:  5,
+        opacity: 0.85
+      }).bindTooltip(route.tooltip, {sticky: true, className: 'route-tooltip'})
+        .addTo(map);
+
+      // Arrow at midpoint of the arc
+      L.polylineDecorator(line, {
+        patterns: [{
+          offset:  '50%',
+          repeat:  0,
+          symbol:  L.Symbol.arrowHead({
+            pixelSize:   14,
+            polygon:     false,
+            pathOptions: {
+              stroke:  true,
+              color:   route.color,
+              weight:  2.5,
+              opacity: 1
+            }
+          })
+        }]
+      }).addTo(map);
+    });
+  });
+
+  // ── Node markers ─────────────────────────────────────────────────────────
+  L.circleMarker([48.8581265,2.2956641],{radius:13,color:"#fff",weight:2,fillColor:"#333",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Depot</b><br><i style='color:#666'>Av. Gustave Eiffel, 75007 Paris</i><hr style='margin:4px 0'><b>Type:</b> Depot<br><b>Time window:</b> 08h00 \u2013 23h00<br><b>Volume:</b> \u2014<br><b>GPS:</b> 48.85813, 2.29566</div>").addTo(map);
+    L.circleMarker([48.8113,2.2616],{radius:10,color:"#0a4a7f",weight:2,fillColor:"#1a7abf",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Cirque \u2014 Delivery</b><br><i style='color:#666'>110 Rue Amelot, 75011 Paris</i><hr style='margin:4px 0'><b>Type:</b> Delivery (drop-off)<br><b>Time window:</b> 08h00 \u2013 16h35<br><b>Volume:</b> +7.05\u202fm\u00b3<br><b>GPS:</b> 48.81130, 2.26160</div>").addTo(map);
+    L.circleMarker([48.8685,2.376],{radius:10,color:"#0a4a7f",weight:2,fillColor:"#1a7abf",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Hotel \u2014 Delivery</b><br><i style='color:#666'>Pl. Gerard Willaume, 77600 Chanteloup-en-Brie</i><hr style='margin:4px 0'><b>Type:</b> Delivery (drop-off)<br><b>Time window:</b> 08h00 \u2013 17h05<br><b>Volume:</b> +3.60\u202fm\u00b3<br><b>GPS:</b> 48.86850, 2.37600</div>").addTo(map);
+    L.circleMarker([48.801,2.2316],{radius:10,color:"#0a4a7f",weight:2,fillColor:"#1a7abf",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Casa \u2014 Delivery</b><br><i style='color:#666'>32 allee du hetre, pontault-combault 77340</i><hr style='margin:4px 0'><b>Type:</b> Delivery (drop-off)<br><b>Time window:</b> 08h00 \u2013 16h55<br><b>Volume:</b> +5.42\u202fm\u00b3<br><b>GPS:</b> 48.80100, 2.23160</div>").addTo(map);
+    L.circleMarker([48.811600000000006,2.2619000000000002],{radius:10,color:"#7f0000",weight:2,fillColor:"#c0392b",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Cirque \u2014 Recovery</b><br><i style='color:#666'>110 Rue Amelot, 75011 Paris</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 20h00 \u2013 21h40<br><b>Volume:</b> -7.05\u202fm\u00b3<br><b>GPS:</b> 48.81160, 2.26190</div>").addTo(map);
+    L.circleMarker([48.8688,2.3763],{radius:10,color:"#7f0000",weight:2,fillColor:"#c0392b",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Hotel \u2014 Recovery</b><br><i style='color:#666'>Pl. Gerard Willaume, 77600 Chanteloup-en-Brie</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 19h20 \u2013 22h00<br><b>Volume:</b> -3.60\u202fm\u00b3<br><b>GPS:</b> 48.86880, 2.37630</div>").addTo(map);
+    L.circleMarker([48.801300000000005,2.2319],{radius:10,color:"#7f0000",weight:2,fillColor:"#c0392b",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Casa \u2014 Recovery</b><br><i style='color:#666'>32 allee du hetre, pontault-combault 77340</i><hr style='margin:4px 0'><b>Type:</b> Recovery (pick-up)<br><b>Time window:</b> 19h40 \u2013 21h50<br><b>Volume:</b> -5.42\u202fm\u00b3<br><b>GPS:</b> 48.80130, 2.23190</div>").addTo(map);
+</script>
 </body>
 </html>

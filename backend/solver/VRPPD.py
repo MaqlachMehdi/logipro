@@ -19,7 +19,7 @@ MARGIN_AFTER_CONCERT   = 20   # possible concert delay
 MARGIN_BEFORE_CLOSING  = 30   # cannot arrive too close to closing time
 if __name__ == "__main__":
     import os as _os
-    from visualize import extract_solution, render_html
+    from visualize import render_html
 
     # 1. Load data from JSON
     data_path = _os.path.join(_os.path.dirname(__file__), "vrppd_data.json")
@@ -27,9 +27,9 @@ if __name__ == "__main__":
         data = json.load(f)
 
     # 2. Build the domain problem (nodes, edges, vehicles)
-    loss_params  = LossParams(alpha_time=1.0, alpha_distance=1.0)
+    loss_params = LossParams(alpha_time=1.0, alpha_distance=1.0)
     time_margin = TimeMargin(before_concert=MARGIN_BEFORE_CONCERT, after_concert=MARGIN_AFTER_CONCERT, before_closing=MARGIN_BEFORE_CLOSING)
-    problem      = build_problem(data, loss_params,time_margin,recall_api=RECALL_MAP_API)
+    problem     = build_problem(data, loss_params, time_margin, recall_api=RECALL_MAP_API)
 
     print(problem)
 
@@ -39,19 +39,13 @@ if __name__ == "__main__":
     # 4. Solve
     pulp_problem.solve(pulp.PULP_CBC_CMD(msg=1))
 
-    status    = pulp.LpStatus[pulp_problem.status]
-    objective = pulp.value(pulp_problem.objective)
-    print("Status    :", status)
-    print("Objective :", objective)
+    from solver.solver import Result, make_result_from_pulp_result
+    result = make_result_from_pulp_result(pulp_problem, problem)
+
+    print("Status    :", pulp.LpStatus[pulp_problem.status])
+    print("Objective :", pulp.value(pulp_problem.objective))
+    print(result)
 
     # 5. Visualize
-    routes      = extract_solution(problem, choose_edges)
     output_path = _os.path.join(_os.path.dirname(__file__), "solution.html")
-    render_html(
-        problem,
-        data,
-        routes,
-        output_path,
-        solve_status=status,
-        objective_value=objective,
-    )
+    render_html(result, data, output_path)

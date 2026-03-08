@@ -35,7 +35,18 @@ class Problem:
 
     def __post_init__(self):
         self.number_of_locations = len(self.delivery_nodes)
+
+        self._pulp_id_to_node = dict()
+
+        for node in self.all_nodes:
+            self._pulp_id_to_node[node.get_id_for_pulp()] = node
+
         self.health_check()
+
+    def access_node_by_pulp_id(self, pulp_id: str) -> Node:
+        if pulp_id not in self._pulp_id_to_node:
+            raise KeyError(f"No node found for pulp_id: {pulp_id}")
+        return self._pulp_id_to_node[pulp_id]
 
     @property
     def n_of_nodes(self) -> int:

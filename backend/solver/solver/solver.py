@@ -9,16 +9,95 @@ import pulp
 
 @dataclass
 class Result : 
-  data : dict[str,Trajectory] 
-  problem: Problem 
-  pulp_problem: pulp.LpProblem
+    data : dict[str,Trajectory] 
+    problem: Problem 
+    pulp_problem: pulp.LpProblem    
+    def __post_init__(self):
+        if not self.data:
+            raise ValueError("Result data is empty.")
+        if self.pulp_problem.status != pulp.LpStatusOptimal:
+            raise ValueError(f"Result pulp_problem is not optimal. Status: {pulp.LpStatus[self.pulp_problem.status]}")
 
-  def __post_init__(self):
-      if not self.data:
-          raise ValueError("Result data is empty.")
-      if self.pulp_problem.status != pulp.LpStatusOptimal:
-          raise ValueError(f"Result pulp_problem is not optimal. Status: {pulp.LpStatus[self.pulp_problem.status]}")
+    def __str__(self):
+        return_str = "Result:\n >>> Trajectories :\n"
+        for plate, trajectory in self.data.items():
+            return_str += f"    - Vehicle {plate} :\n"
+            for arrival_node, departure_node in zip(trajectory.arrival_nodes, trajectory.departure_nodes):
+                return_str += f"        Departure from {departure_node.id} (type: {departure_node.__class__.__name__}) ------> Arrival at {arrival_node.id} (type: {arrival_node.__class__.__name__})\n"
+        return return_str
       
+
+
+from models.trajectories import Trajectory
+def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem) -> Result:
+    chosen_edges = {var.name: var.varValue for var in pulp_problem.variables() if var.name.startswith("e_")}
+    data = dict()
+
+    chosen_edges_dict = dict()
+    
+    for plate in problem.vehicles_dict.keys(): 
+        chosen_edges_dict[plate] = list()
+    print(f"Initialized : {chosen_edges_dict}")
+
+    for var_name, value in chosen_edges.items():
+        if value >= 0.99:  # binary variable, consider as chosen if value is close to 1
+            plate = var_name.split(',')[2].split("'")[1].replace("_","-")
+            print(plate)
+
+            node_start_id = var_name.split(',')[0].split("'")[1]
+            node_end_id = var_name.split(',')[1].split("'")[1]
+
+
+            chosen_edges_dict[plate].append((node_start_id, node_end_id))
+        
+        for plate,chain in chosen_edges_dict.items(): 
+            if len(chain) == 0:
+                continue
+
+            arrival_node_index   = []
+            departure_node_index = ["0"]
+
+
+            current_departure = "0"
+            current_arrival = None
+            
+
+            returned_to_deposit = False
+            while not returned_to_deposit:
+                found_edge = False  # Indicateur pour savoir si on a trouvé un edge valide
+
+                for edge in chain:
+                    if edge[0] == current_departure:
+                        print("Found next arrival")
+                        current_arrival = edge[1]
+                        arrival_node_index.append(current_arrival)
+
+                        current_departure = current_arrival
+                        departure_node_index.append(current_arrival)
+
+                        print("Current arrival:", current_arrival)
+
+                        if current_arrival == problem.deposit_node.get_id_for_pulp():
+                            print("Reached deposit, stopping")
+                            returned_to_deposit = True
+                            break
+
+                        found_edge = True  # On a trouvé un edge, donc on continue normalement
+                        break
+
+                # Si aucun edge n'a été trouvé, quitte la boucle pour éviter une boucle infinie
+                if not found_edge:
+                    print("No edge found for current departure, breaking loop to prevent infinite loop.")
+                    break
+            
+            trajectory = Trajectory(
+                vehicle_id=plate,
+                arrival_nodes=[problem.access_node_by_pulp_id(node_id.replace("_","-")) for node_id in arrival_node_index],
+                departure_nodes=[problem.access_node_by_pulp_id(node_id.replace("_","-")) for node_id in departure_node_index],
+            )
+            data[plate] = trajectory
+
+    return Result(data=data, problem=problem, pulp_problem=pulp_problem)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -48,9 +127,15 @@ def _add_constraints(
     pulp_problem    : pulp.LpProblem,
     problem         : Problem,
     choose_edges    : dict[tuple[str, str, str], pulp.LpVariable],
+
     times_arrival   : dict[tuple[str, str], pulp.LpVariable],
+
+    time_arrival_deposit    : dict[tuple[str], pulp.LpVariable],
+    time_departure_deposit  : dict[tuple[str], pulp.LpVariable],
+
     loads_at_arrival: dict[tuple[str, str], pulp.LpVariable],
 ) -> pulp.LpProblem:
+    print(f"At reception : {time_arrival_deposit}\n {50*'-'}")
     all_nodes = problem.all_nodes
 
 
@@ -122,24 +207,54 @@ def _add_constraints(
 
     # Vehicle cannot leave before depot opens
     for vehicule in problem.vehicles_dict.values():
-        pulp_problem += times_arrival[problem.deposit_node.get_id_for_pulp(), vehicule.id] >= problem.deposit_node.time_window.start_minutes
-        pulp_problem += times_arrival[problem.deposit_node.get_id_for_pulp(), vehicule.id] <= problem.deposit_node.time_window.end_minutes
+        print(f"VEHICULE : {vehicule.id}")
+        print(time_arrival_deposit)
+        print("=================================")
+        pulp_problem += time_arrival_deposit[vehicule.id] >= problem.deposit_node.time_window.start_minutes
+        pulp_problem += time_arrival_deposit[vehicule.id] <= problem.deposit_node.time_window.end_minutes
 
     M = 1600  # big-M > max possible journey duration (minutes)
 
 
     # Time propagation between consecutive nodes
-    for node_1 in all_nodes:
-        for node_2 in all_nodes:
-            if node_1 != node_2:
+    all_nodes_except_deposit = problem.delivery_nodes + problem.recovery_nodes
+    # CASES STARTING FROM DEPOSIT
+    for node_end in all_nodes_except_deposit:
+        for vehicule in problem.vehicles_dict.values():
+
+            travel_time = problem.oriented_edges.travel_times_min[problem.deposit_node.id, node_end.id] # travel time from deposit to node_end
+            time_departure = time_departure_deposit[vehicule.id] # departure time from deposit
+
+            pulp_problem += (
+                 # arrival time at node_end must be >= departure time from deposit + travel time, if edge is chosen
+                times_arrival[node_end.get_id_for_pulp(), vehicule.id] >= (time_departure + travel_time
+                    - M * (1 - choose_edges[problem.deposit_node.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
+                )
+            )
+
+    # CASES ENDING AT DEPOSIT
+    for node_start in all_nodes_except_deposit:
+        for vehicule in problem.vehicles_dict.values():
+            time_departure = times_arrival[node_start.get_id_for_pulp(), vehicule.id] + node_start.required_time
+            travel_time = problem.oriented_edges.travel_times_min[node_start.id, problem.deposit_node.id] # travel time from node_start to deposit
+            pulp_problem += (
+                 # arrival time at deposit must be >= departure time from node_start + travel_time, if edge is chosen
+                time_arrival_deposit[vehicule.id] >= (time_departure + travel_time
+                    - M * (1 - choose_edges[node_start.get_id_for_pulp(), problem.deposit_node.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
+                )
+            )
+
+    # CASES WHERE DEPOSIT IS NOT INVOLVED
+    for node_start in all_nodes_except_deposit:
+        for node_end in all_nodes_except_deposit:
+            if node_start != node_end:
                 for vehicule in problem.vehicles_dict.values():
-                    
+                    time_departure = times_arrival[node_start.get_id_for_pulp(), vehicule.id] + node_start.required_time
+                    travel_time = problem.oriented_edges.travel_times_min[node_start.id, node_end.id] # travel time from node_start to node_end
                     pulp_problem += (
-                        times_arrival[node_2.get_id_for_pulp(), vehicule.id] >= ( # arrival time at 2 must be lower than
-                            times_arrival[node_1.get_id_for_pulp(), vehicule.id] # arrival time at 1 
-                            + node_1.required_time # temps requis sur site.
-                            + problem.oriented_edges.travel_times_min[node_1.id, node_2.id] # temps de 1 vers 2 
-                            - M * (1 - choose_edges[node_1.get_id_for_pulp(), node_2.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
+                         # arrival time at node_end must be >= departure time from node_start + travel time, if edge is chosen
+                        times_arrival[node_end.get_id_for_pulp(), vehicule.id] >= (time_departure + travel_time
+                            - M * (1 - choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
                           )
                     )
 
@@ -174,7 +289,21 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
     # TODO: wire into constraints (time-window propagation)
     times_arrival = pulp.LpVariable.dicts(
         "time_arrival",
-        [(node.get_id_for_pulp(), vehicule.id) for node in  for vehicule in vehicules],
+        [(node.get_id_for_pulp(), vehicule.id) for node in all_nodes_except_deposit for vehicule in vehicules],
+        lowBound=0,
+        cat="Continuous",
+    )
+
+    time_arrival_deposit = pulp.LpVariable.dicts(
+        "time_arrival_deposit",
+        [vehicule.id for vehicule in vehicules],
+        lowBound=0,
+        cat="Continuous",
+    )
+    print(f"At creation : {time_arrival_deposit}\n {50*'-'}")
+    time_departure_deposit = pulp.LpVariable.dicts(
+        "time_departure_deposit",
+        [vehicule.id for vehicule in vehicules],
         lowBound=0,
         cat="Continuous",
     )
@@ -189,7 +318,15 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
 
     pulp_problem = pulp.LpProblem(problem.name, pulp.LpMinimize)
     pulp_problem = _add_loss(pulp_problem, problem, choose_edges)
-    pulp_problem = _add_constraints(pulp_problem, problem, choose_edges,times_arrival, loads_at_arrival)
+    pulp_problem = _add_constraints(
+        pulp_problem=pulp_problem,
+        problem=problem,
+        choose_edges=choose_edges,
+        times_arrival=times_arrival,
+        loads_at_arrival=loads_at_arrival,
+        time_arrival_deposit=time_arrival_deposit,
+        time_departure_deposit=time_departure_deposit
+    )
 
     return pulp_problem, choose_edges
 
