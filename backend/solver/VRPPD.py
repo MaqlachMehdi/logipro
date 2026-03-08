@@ -83,6 +83,7 @@ class Node:
     required_volume:  float       | None = None
     time_window:      TimeWindow  | None = None
     gps_coordinates:  tuple       | None = None  # (lat, lon)
+    required_time  :  int         | None = None # min
 
 
 class DepositNode(Node):
@@ -463,6 +464,9 @@ def build_problem(data: dict, loss_params: LossParams) -> Problem:
         concert_dur    = loc["concert_duration_min"]
         coords         = (loc["lat"], loc["lon"])
 
+        delivery_node.required_time = setup_time
+        recovery_node.required_time = teardown_time
+
         delivery_node.time_window = TimeWindow(
             start_minutes=open_time,
             end_minutes=concert_start - setup_time - MARGIN_BEFORE_CONCERT,
@@ -516,17 +520,23 @@ def _add_loss(
         for node_end   in problem.all_nodes
         for vehicule   in problem.vehicles_dict.values()
         if node_start != node_end
-    )
+    ) + lp.alpha_time * pulp.lpSum(
+        
+
     return pulp_problem
 
 
 def _add_constraints(
-    pulp_problem: pulp.LpProblem,
-    problem:      Problem,
-    choose_edges: dict,
+    pulp_problem    : pulp.LpProblem,
+    problem         : Problem,
+    choose_edges    : dict[tuple[str, str, str], pulp.LpVariable],
+    times_arrival   : dict[tuple[str, str], pulp.LpVariable],
+    loads_at_arrival: dict[tuple[str, str], pulp.LpVariable],
 ) -> pulp.LpProblem:
     all_nodes = problem.all_nodes
 
+
+    # === FLUX CONSTRAINTS ===
     # Each venue must be delivered exactly once
     for delivery_node in problem.delivery_nodes:
         pulp_problem += (
@@ -580,6 +590,42 @@ def _add_constraints(
             pulp.lpSum(choose_edges[node_start.get_id_for_pulp(), problem.deposit_node.get_id_for_pulp(), vehicule.id] for node_start in all_nodes if node_start.get_id_for_pulp() != problem.deposit_node.get_id_for_pulp())
         )
 
+    # === TIME A LOCATION CONSTRAINT (FULFILL JOBS) ===
+
+    # # Lower bound on arrival time for all nodes
+    for node in problem.delivery_nodes + problem.recovery_nodes:
+        for vehicule in problem.vehicles_dict.values():
+            pulp_problem += times_arrival[node.get_id_for_pulp(), vehicule.id] >= node.time_window.start_minutes
+
+    # Upper bound on arrival time for all nodes
+    for node in problem.delivery_nodes + problem.recovery_nodes:
+        for vehicule in problem.vehicles_dict.values():
+            pulp_problem += times_arrival[node.get_id_for_pulp(), vehicule.id] <= node.time_window.end_minutes
+
+    # Vehicle cannot leave before depot opens
+    for vehicule in problem.vehicles_dict.values():
+        pulp_problem += times_arrival[problem.deposit_node.get_id_for_pulp(), vehicule.id] >= problem.deposit_node.time_window.start_minutes
+        pulp_problem += times_arrival[problem.deposit_node.get_id_for_pulp(), vehicule.id] <= problem.deposit_node.time_window.end_minutes
+
+    M = 1600  # big-M > max possible journey duration (minutes)
+
+
+    # Time propagation between consecutive nodes
+    for node_1 in all_nodes:
+        for node_2 in all_nodes:
+            if node_1 != node_2:
+                for vehicule in problem.vehicles_dict.values():
+                    
+                    pulp_problem += (
+                        times_arrival[node_2.get_id_for_pulp(), vehicule.id] >= ( # arrival time at 2 must be lower than
+                            times_arrival[node_1.get_id_for_pulp(), vehicule.id] # arrival time at 1 
+                            + node_1.required_time # temps requis sur site.
+                            + problem.oriented_edges.travel_times_min[node_1.id, node_2.id] # temps de 1 vers 2 
+                            - M * (1 - choose_edges[node_1.get_id_for_pulp(), node_2.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
+                          )
+                    )
+
+
     return pulp_problem
 
 
@@ -609,7 +655,7 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
     # TODO: wire into constraints (time-window propagation)
     times_arrival = pulp.LpVariable.dicts(
         "time_arrival",
-        [(node.id, vehicule.id) for node in all_nodes for vehicule in vehicules],
+        [(node.get_id_for_pulp(), vehicule.id) for node in all_nodes for vehicule in vehicules],
         lowBound=0,
         cat="Continuous",
     )
@@ -617,14 +663,14 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
     # TODO: wire into capacity constraints
     loads_at_arrival = pulp.LpVariable.dicts(
         "load_at_arrival",
-        [(node.id, vehicule.id) for node in all_nodes for vehicule in vehicules],
+        [(node.get_id_for_pulp(), vehicule.id) for node in all_nodes for vehicule in vehicules],
         lowBound=0,
         cat="Continuous",
     )
 
     pulp_problem = pulp.LpProblem(problem.name, pulp.LpMinimize)
     pulp_problem = _add_loss(pulp_problem, problem, choose_edges)
-    pulp_problem = _add_constraints(pulp_problem, problem, choose_edges)
+    pulp_problem = _add_constraints(pulp_problem, problem, choose_edges,times_arrival, loads_at_arrival)
 
     return pulp_problem, choose_edges
 
@@ -734,7 +780,7 @@ if __name__ == "__main__":
         data = json.load(f)
 
     # 2. Build the domain problem (nodes, edges, vehicles)
-    loss_params  = LossParams(alpha_time=0.0, alpha_distance=1.0)
+    loss_params  = LossParams(alpha_time=1.0, alpha_distance=1.0)
     problem      = build_problem(data, loss_params)
 
     print(problem)
