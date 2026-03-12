@@ -77,7 +77,57 @@ def _trajectory_ordered_nodes(trajectory) -> list:
     return [trajectory.departure_nodes[0]] + list(trajectory.arrival_nodes)
 
 
-def _build_vehicle_routes(result, color_map: dict) -> list[dict]:
+def _extract_pulp_values(result) -> tuple[dict, dict, dict, dict]:
+    """
+    Extract load and time values from solved PuLP variables.
+    Returns:
+        loads_at_arrival: dict[(node_pulp_id, vehicle_id)] -> float
+        times_arrival: dict[(node_pulp_id, vehicle_id)] -> float
+        time_departure_deposit: dict[vehicle_id] -> float
+        loads_departure_deposit: dict[vehicle_id] -> float
+    """
+    loads_at_arrival = {}
+    times_arrival = {}
+    time_departure_deposit = {}
+    loads_departure_deposit = {}
+
+    for var in result.pulp_problem.variables():
+        name = var.name
+        val = var.varValue
+        if val is None:
+            continue
+
+        # load_at_arrival_('node_id',_'vehicle_id')
+        if name.startswith("load_at_arrival_"):
+            # Parse: load_at_arrival_('D_123',_'AA_111_AA')
+            parts = name.replace("load_at_arrival_(", "").rstrip(")").split(",_")
+            if len(parts) == 2:
+                node_id = parts[0].strip("'")
+                veh_id = parts[1].strip("'").replace("_", "-")
+                loads_at_arrival[(node_id, veh_id)] = val
+
+        # time_arrival_('node_id',_'vehicle_id')
+        elif name.startswith("time_arrival_") and not name.startswith("time_arrival_deposit"):
+            parts = name.replace("time_arrival_(", "").rstrip(")").split(",_")
+            if len(parts) == 2:
+                node_id = parts[0].strip("'")
+                veh_id = parts[1].strip("'").replace("_", "-")
+                times_arrival[(node_id, veh_id)] = val
+
+        # time_departure_deposit_'vehicle_id'
+        elif name.startswith("time_departure_deposit_"):
+            veh_id = name.replace("time_departure_deposit_", "").strip("'").replace("_", "-")
+            time_departure_deposit[veh_id] = val
+
+        # load_departure_depot_'vehicle_id'
+        elif name.startswith("load_departure_depot_"):
+            veh_id = name.replace("load_departure_depot_", "").strip("'").replace("_", "-")
+            loads_departure_deposit[veh_id] = val
+
+    return loads_at_arrival, times_arrival, time_departure_deposit, loads_departure_deposit
+
+
+def _build_vehicle_routes(result, color_map: dict, data: dict | None) -> list[dict]:
     """
     Build a list of vehicle-route dicts that will be JSON-serialised into the
     HTML.  Each dict carries the per-segment coordinate pairs so the JS can
@@ -85,6 +135,9 @@ def _build_vehicle_routes(result, color_map: dict) -> list[dict]:
     """
     problem = result.problem
     routes  = []
+
+    # Extract load/time data from PuLP solution
+    loads_at_arrival, times_arrival, time_departure_depot, loads_departure_depot = _extract_pulp_values(result)
 
     for i, (plate, trajectory) in enumerate(result.data.items()):
         ordered = _trajectory_ordered_nodes(trajectory)
@@ -94,13 +147,51 @@ def _build_vehicle_routes(result, color_map: dict) -> list[dict]:
         vehicle   = problem.vehicles_dict[plate]
         curvature = _CURVATURES[i % len(_CURVATURES)]
 
-        segments: list[list] = []
-        for node_a, node_b in zip(ordered[:-1], ordered[1:]):
+        segments: list[dict] = []
+        for seg_idx, (node_a, node_b) in enumerate(zip(ordered[:-1], ordered[1:])):
             ll_a = _node_latlng(node_a)
             ll_b = _node_latlng(node_b)
             if ll_a is None or ll_b is None:
                 continue
-            segments.append([list(ll_a), list(ll_b)])
+
+            # Get node labels
+            from_label = _node_label(node_a, data)
+            to_label = _node_label(node_b, data)
+
+            # Get load at arrival at destination node
+            node_b_pulp_id = node_b.get_id_for_pulp().replace("-", "_")
+            load_at_dest = loads_at_arrival.get((node_b_pulp_id, plate.replace("-", "_")))
+
+            # Get arrival time at destination
+            if isinstance(node_b, DepositNode):
+                # For depot return, we don't have time_arrival in times_arrival dict
+                arrival_time = None
+            else:
+                arrival_time = times_arrival.get((node_b_pulp_id, plate.replace("-", "_")))
+
+            # Get departure load for first segment from depot
+            if seg_idx == 0 and isinstance(node_a, DepositNode):
+                departure_load = loads_departure_depot.get(plate.replace("-", "_"))
+            else:
+                # For intermediate departures, load = load at arrival at that node
+                node_a_pulp_id = node_a.get_id_for_pulp().replace("-", "_")
+                departure_load = loads_at_arrival.get((node_a_pulp_id, plate.replace("-", "_")))
+
+            # Distance for this edge
+            dist_km = problem.oriented_edges.distances_km.get((node_a.id, node_b.id))
+            travel_time = problem.oriented_edges.travel_times_min.get((node_a.id, node_b.id))
+
+            segments.append({
+                "coords": [list(ll_a), list(ll_b)],
+                "from": from_label,
+                "to": to_label,
+                "load_at_dest": load_at_dest,
+                "departure_load": departure_load,
+                "arrival_time": arrival_time,
+                "distance_km": dist_km,
+                "travel_time_min": travel_time,
+                "step": seg_idx + 1,
+            })
 
         if not segments:
             continue
@@ -109,7 +200,7 @@ def _build_vehicle_routes(result, color_map: dict) -> list[dict]:
             "plate":     plate,
             "color":     color_map[plate],
             "curvature": curvature,
-            "tooltip":   f"{plate}  ({vehicle.max_volume}\u202fm³ cap.)",
+            "capacity":  vehicle.max_volume,
             "segments":  segments,
         })
 
@@ -164,7 +255,7 @@ def render_html(
     center_lon = sum(all_lons) / len(all_lons)
 
     # ── Route data → JSON for the JS renderer ─────────────────────────────────
-    vehicle_routes = _build_vehicle_routes(result, color_map)
+    vehicle_routes = _build_vehicle_routes(result, color_map, data)
     vehicle_routes_json = json.dumps(vehicle_routes, separators=(",", ":"))
     active_vehicle_count = len(vehicle_routes)
 
@@ -188,6 +279,45 @@ def render_html(
             f'<br><small class="route-seq">{stop_names}</small>'
             f'</div></div>'
         )
+
+    # ── Extract load/time values for node popups ─────────────────────────────
+    loads_at_arrival, times_arrival, time_departure_depot, loads_departure_depot = _extract_pulp_values(result)
+
+    # Build a mapping: node_id -> list of (vehicle_plate, arrival_time, load_at_arrival, vehicle_color)
+    node_visit_info: dict[str, list] = {}
+    for plate, trajectory in result.data.items():
+        ordered = _trajectory_ordered_nodes(trajectory)
+        veh_color = color_map.get(plate, "#999")
+        for idx, node in enumerate(ordered):
+            node_pulp_id = node.get_id_for_pulp().replace("-", "_")
+            veh_pulp_id = plate.replace("-", "_")
+
+            if isinstance(node, DepositNode):
+                if idx == 0:
+                    # Departure from depot
+                    arr_time = time_departure_depot.get(veh_pulp_id)
+                    load = loads_departure_depot.get(veh_pulp_id)
+                    visit_type = "Departure"
+                else:
+                    # Return to depot
+                    arr_time = None  # No specific arrival time var for depot return
+                    load = loads_at_arrival.get((node_pulp_id, veh_pulp_id))
+                    visit_type = "Return"
+            else:
+                arr_time = times_arrival.get((node_pulp_id, veh_pulp_id))
+                load = loads_at_arrival.get((node_pulp_id, veh_pulp_id))
+                visit_type = "Visit"
+
+            if node.id not in node_visit_info:
+                node_visit_info[node.id] = []
+            node_visit_info[node.id].append({
+                "plate": plate,
+                "arrival_time": arr_time,
+                "load": load,
+                "color": veh_color,
+                "visit_type": visit_type,
+                "step": idx,
+            })
 
     # ── Markers JS ────────────────────────────────────────────────────────────
     markers_js_lines: list[str] = []
@@ -214,17 +344,37 @@ def render_html(
             f"{node.required_volume:+.2f}\u202fm³"
             if node.required_volume is not None else "—"
         )
+        service_time = getattr(node, "required_time", None)
+        service_str = f"{int(service_time)} min" if service_time else "—"
+
         label   = _node_label(node, data)
         address = _node_address(node, data)
 
+        # Build vehicle visit section
+        visits = node_visit_info.get(node.id, [])
+        visit_html = ""
+        if visits:
+            visit_html = "<hr style='margin:6px 0'><b>Vehicle visits:</b><br>"
+            for v in visits:
+                time_str = _hhmm(int(v['arrival_time'])) if v['arrival_time'] is not None else "—"
+                load_str = f"{v['load']:.2f}\u202fm³" if v['load'] is not None else "—"
+                visit_html += (
+                    f"<div style='margin:3px 0;padding:3px 6px;background:#f5f5f5;border-left:3px solid {v['color']};border-radius:2px'>"
+                    f"<b style='color:{v['color']}'>{v['plate']}</b> ({v['visit_type']})<br>"
+                    f"<small>Arrival: {time_str} · Load: {load_str}</small>"
+                    f"</div>"
+                )
+
         popup_html = (
-            f"<div style='font-size:13px;min-width:200px'>"
+            f"<div style='font-size:13px;min-width:220px'>"
             f"<b style='font-size:15px'>{label}</b><br>"
             f"<i style='color:#666'>{address}</i><hr style='margin:4px 0'>"
             f"<b>Type:</b> {node_type}<br>"
             f"<b>Time window:</b> {tw_str}<br>"
-            f"<b>Volume:</b> {vol_str}<br>"
+            f"<b>Volume Δ:</b> {vol_str}<br>"
+            f"<b>Service time:</b> {service_str}<br>"
             f"<b>GPS:</b> {lat:.5f}, {lon:.5f}"
+            f"{visit_html}"
             f"</div>"
         )
         markers_js_lines.append(
@@ -282,10 +432,13 @@ def render_html(
       box-shadow:0 2px 10px rgba(0,0,0,.2); font-size:13px; white-space:nowrap;
     }}
     .route-tooltip {{
-      background:rgba(30,30,30,.85); color:white;
-      border:none; border-radius:4px; font-size:12px; padding:4px 8px;
+      background:rgba(30,30,30,.92); color:white;
+      border:none; border-radius:6px; font-size:12px; padding:8px 12px;
+      box-shadow:0 3px 10px rgba(0,0,0,.4);
+      line-height:1.5;
     }}
-    .leaflet-tooltip-top.route-tooltip::before {{ border-top-color:rgba(30,30,30,.85); }}
+    .route-tooltip hr {{ border:none; border-top:1px solid #555; }}
+    .leaflet-tooltip-top.route-tooltip::before {{ border-top-color:rgba(30,30,30,.92); }}
   </style>
 </head>
 <body>
@@ -338,17 +491,49 @@ def render_html(
     return pts;
   }}
 
+  // ── Helper to format time ──────────────────────────────────────────────────
+  function formatTime(minutes) {{
+    if (minutes === null || minutes === undefined) return '—';
+    var h = Math.floor(minutes / 60);
+    var m = Math.round(minutes % 60);
+    return ('0' + h).slice(-2) + 'h' + ('0' + m).slice(-2);
+  }}
+
+  // ── Helper to format load ────────────────────────────────────────────────
+  function formatLoad(load, capacity) {{
+    if (load === null || load === undefined) return '—';
+    var pct = capacity > 0 ? Math.round(100 * load / capacity) : 0;
+    return load.toFixed(2) + ' m³ (' + pct + '%)';
+  }}
+
   // ── Draw routes ───────────────────────────────────────────────────────────
   var vehicleRoutes = {vehicle_routes_json};
 
   vehicleRoutes.forEach(function(route) {{
     route.segments.forEach(function(seg) {{
-      var pts  = bezierPoints(seg[0], seg[1], route.curvature, 48);
+      var pts  = bezierPoints(seg.coords[0], seg.coords[1], route.curvature, 48);
+
+      // Build rich tooltip
+      var tooltipHtml = '<div style="min-width:220px">' +
+        '<b style="font-size:13px;color:' + route.color + '">' + route.plate + '</b>' +
+        ' <span style="color:#aaa">Step ' + seg.step + '</span>' +
+        '<hr style="margin:4px 0;border-color:#555">' +
+        '<b>From:</b> ' + seg.from + '<br>' +
+        '<b>To:</b> ' + seg.to + '<br>' +
+        '<hr style="margin:4px 0;border-color:#555">' +
+        '<b>Departure load:</b> ' + formatLoad(seg.departure_load, route.capacity) + '<br>' +
+        '<b>Load at arrival:</b> ' + formatLoad(seg.load_at_dest, route.capacity) + '<br>' +
+        '<b>Arrival time:</b> ' + formatTime(seg.arrival_time) + '<br>' +
+        '<hr style="margin:4px 0;border-color:#555">' +
+        '<b>Distance:</b> ' + (seg.distance_km !== null ? seg.distance_km.toFixed(1) + ' km' : '—') + '<br>' +
+        '<b>Travel time:</b> ' + (seg.travel_time_min !== null ? Math.round(seg.travel_time_min) + ' min' : '—') +
+        '</div>';
+
       var line = L.polyline(pts, {{
         color:   route.color,
         weight:  5,
         opacity: 0.85
-      }}).bindTooltip(route.tooltip, {{sticky: true, className: 'route-tooltip'}})
+      }}).bindTooltip(tooltipHtml, {{sticky: true, className: 'route-tooltip'}})
         .addTo(map);
 
       // Arrow at midpoint of the arc
