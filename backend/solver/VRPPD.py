@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # 4. Solve
     pulp_problem.solve(pulp.PULP_CBC_CMD(msg=True))
 
-    from solver.solver import Result, make_result_from_pulp_result
+    from solver.solver.lip_solver import make_result_from_pulp_result
     result = make_result_from_pulp_result(pulp_problem, problem)
 
     print("Status:", pulp.LpStatus[pulp_problem.status])
