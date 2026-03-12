@@ -98,29 +98,13 @@ def _add_loss(
 ) -> pulp.LpProblem:
     lp = problem.loss_params
     print(choose_edges.keys())
-    pulp_problem += (
-    # Distance parcourue
-    lp.alpha_distance * pulp.lpSum(
-        problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
-        * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
+    pulp_problem += lp.alpha_distance * pulp.lpSum(
+        problem.oriented_edges.distances_km[(node_start.id, node_end.id)]*choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
         for node_start in problem.all_nodes
-        for node_end in problem.all_nodes
-        for vehicule in problem.vehicles_dict.values()
+        for node_end   in problem.all_nodes
+        for vehicule   in problem.vehicles_dict.values()
         if node_start != node_end
-    )
-    
-    # # # Coût fixe par véhicule utilisé (incite à consolider les routes)
-    # # lp.alpha_vehicle * pulp.lpSum(
-    # #     vehicle_used[vehicule.id]
-    # #     for vehicule in problem.vehicles_dict.values()
-    # # )
-    # +
-    # # Capacité gaspillée au départ (incite à partir chargé)
-    # lp.alpha_capacity * pulp.lpSum(
-    #     vehicule.max_volume * vehicle_used[vehicule.id] - loads_departure_dispatch[vehicule.id]
-    #     for vehicule in problem.vehicles_dict.values()
-    # )
-)
+    )# + lp.alpha_time * pulp.lpSum(
         
 
     return pulp_problem
@@ -264,14 +248,6 @@ def _add_constraints(
     # ########## Capacity constraints ##########
 
     # # L[v, k] = load (volume) on vehicle k upon ARRIVAL at node v
-    #Si tu veux contraindre la charge au retour au dépôt :
-    # Variable : charge au DÉPART du dépôt (différente de la charge au retour)
-    loads_departure_deposit = pulp.LpVariable.dicts(
-        "load_departure_depot",
-        [vehicule.id for vehicule in problem.vehicles_dict.values()],
-        lowBound=0,
-        cat="Continuous",
-    )
 
     # Upper bound: load never exceeds vehicle capacity
     # Lower bound already enforced via lowBound=0 in variable declaration
@@ -280,9 +256,10 @@ def _add_constraints(
             pulp_problem += (
                 loads_at_arrival[node.get_id_for_pulp(), vehicule.id] <= vehicule.max_volume
             )
-    # Case of the deposit
+
     for vehicule in problem.vehicles_dict.values():
         pulp_problem += loads_departure_deposit[vehicule.id] <= vehicule.max_volume
+
 
     # Load propagation between consecutive nodes (big-M linearisation):
     #   If x[v,w,k] = 1  =>  L[w,k] = L[v,k] + demand[w]
@@ -290,7 +267,24 @@ def _add_constraints(
     
     M_cap = max(vehicule.max_volume*2 for vehicule in problem.vehicles_dict.values()) + max(abs(node.required_volume)*2 for node in all_nodes_except_deposit)
     
-    #  Propagation dépôt → premier nœud
+    #  Propagation de charge — CAS : dépôt → nœud
+    
+
+    # Propagation de charge — CAS : nœud → nœud (hors dépôt)
+    
+
+    #  Propagation de charge — CAS : nœud → dépôt (retour, optionnel selon ton modèle)
+    #    Si tu veux contraindre la charge au retour au dépôt :
+    # Variable : charge au DÉPART du dépôt (différente de la charge au retour)
+    loads_departure_deposit = pulp.LpVariable.dicts(
+        "load_departure_depot",
+        [vehicule.id for vehicule in problem.vehicles_dict.values()],
+        lowBound=0,
+        cat="Continuous",
+    )
+
+    
+    # 2. Propagation dépôt → premier nœud
     #    Le véhicule PERD du volume sur un delivery (required_volume > 0)
     #    Le véhicule GAGNE du volume sur un recovery (required_volume < 0)
     for node_end in all_nodes_except_deposit:
@@ -370,6 +364,21 @@ def _add_constraints(
         )
     )
 
+    # 6. La charge de départ de chaque véhicule doit couvrir ses livraisons
+    #    (ne peut pas partir avec moins que ce qu'il va déposer)
+    # en débat car on peut imaginer un scénario ou le véhicule va récupérer du matériel sur un concert qui vient de se finir 
+    for vehicule in problem.vehicles_dict.values():
+        pulp_problem += (
+            loads_departure_deposit[vehicule.id]
+            >= pulp.lpSum(
+                (node.required_volume or 0.0) * pulp.lpSum(
+                    choose_edges[node.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
+                    for node_end in problem.all_nodes
+                    if node_end.get_id_for_pulp() != node.get_id_for_pulp()
+                )
+                for node in problem.delivery_nodes
+            )
+        )
     #for v in all_nodes:
     #     for w in all_nodes:
     #         if v != w:

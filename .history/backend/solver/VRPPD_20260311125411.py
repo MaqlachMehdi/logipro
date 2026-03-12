@@ -37,13 +37,10 @@ if __name__ == "__main__":
     pulp_problem, choose_edges = build_pulp_problem(problem)
 
     # 4. Solve
-    pulp_problem.solve(pulp.PULP_CBC_CMD(msg=True))
+    pulp_problem.solve(pulp.PULP_CBC_CMD(msg=1))
 
     from solver.solver import Result, make_result_from_pulp_result
     result = make_result_from_pulp_result(pulp_problem, problem)
-
-    print("Status:", pulp.LpStatus[pulp_problem.status])
-    pulp_problem.writeLP("debug_model.lp")
 
     print("Status    :", pulp.LpStatus[pulp_problem.status])
     print("Objective :", pulp.value(pulp_problem.objective))

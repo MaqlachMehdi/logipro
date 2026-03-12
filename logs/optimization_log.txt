@@ -380,3 +380,767 @@ Name: 3, dtype: object
 [2026-03-05 17:29:46] >>> FIN DE L'OPTIMISATION - SUCCES
 [2026-03-05 17:29:46] ================================================================================
 [2026-03-05 17:29:46] 
+[2026-03-10 14:38:34] ================================================================================
+[2026-03-10 14:38:34] >>> DEBUT DE L'OPTIMISATION
+[2026-03-10 14:38:34] ================================================================================
+[2026-03-10 14:38:34] [JSON D'ENTREE - COMPLET]
+[2026-03-10 14:38:34] {
+  "lieux": [
+    {
+      "Id_Lieux": 0,
+      "Nom": "DÃ©pÃ´t",
+      "Adresse": "Av. Gustave Eiffel, 75007 Paris",
+      "lat": 48.8581265,
+      "lon": 2.2956641,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": null,
+      "Instruments": ""
+    },
+    {
+      "Id_Lieux": 1,
+      "Nom": "Cirque",
+      "Adresse": "110 Rue Amelot, 75011 Paris",
+      "lat": 48.8113,
+      "lon": 2.2616,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": 1080,
+      "Instruments": "Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Drum Kit Complete, Drum Kit Complete"
+    },
+    {
+      "Id_Lieux": 2,
+      "Nom": "Hotel",
+      "Adresse": "Pl. GÃ©rard Willaume, 77600 Chanteloup-en-Brie",
+      "lat": 48.8685,
+      "lon": 2.376,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": 1080,
+      "Instruments": "Drum Kit Complete, Drum Kit Complete, Drum Kit Complete"
+    },
+    {
+      "Id_Lieux": 3,
+      "Nom": "Casa",
+      "Adresse": "32 allÃ©e du hÃªtre, pontault-combault 77340",
+      "lat": 0,
+      "lon": 0,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": 1080,
+      "Instruments": "Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Basse, Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard"
+    }
+  ],
+  "instruments": [
+    {
+      "Nom": "Drum Kit Complete",
+      "Volume": 1.2
+    },
+    {
+      "Nom": "Caisse Claire",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Cymbales Pack",
+      "Volume": 0.3
+    },
+    {
+      "Nom": "Guitare Ã‰lectrique",
+      "Volume": 0.1
+    },
+    {
+      "Nom": "Basse",
+      "Volume": 0.12
+    },
+    {
+      "Nom": "Guitare Acoustique",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Ampli Guitare",
+      "Volume": 0.3
+    },
+    {
+      "Nom": "Ampli Basse",
+      "Volume": 0.4
+    },
+    {
+      "Nom": "Pedalboard",
+      "Volume": 0.08
+    },
+    {
+      "Nom": "Piano",
+      "Volume": 2.5
+    },
+    {
+      "Nom": "SynthÃ©tiseur",
+      "Volume": 0.25
+    },
+    {
+      "Nom": "Stand Clavier",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Orgue",
+      "Volume": 1.8
+    },
+    {
+      "Nom": "Enceinte PA",
+      "Volume": 0.4
+    },
+    {
+      "Nom": "Caisson de Bas",
+      "Volume": 0.6
+    },
+    {
+      "Nom": "Table de Mixage",
+      "Volume": 0.5
+    },
+    {
+      "Nom": "Pack Micros",
+      "Volume": 0.2
+    },
+    {
+      "Nom": "Moniteur ScÃ¨ne",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Moving Head",
+      "Volume": 0.3
+    },
+    {
+      "Nom": "Barre LED",
+      "Volume": 0.4
+    },
+    {
+      "Nom": "Gradateur",
+      "Volume": 0.5
+    },
+    {
+      "Nom": "Truss Section",
+      "Volume": 0.8
+    },
+    {
+      "Nom": "Flight Case",
+      "Volume": 0.2
+    },
+    {
+      "Nom": "CÃ¢bles Box",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Stand Rack",
+      "Volume": 0.25
+    },
+    {
+      "Nom": "Riser Backline",
+      "Volume": 0.6
+    },
+    {
+      "Nom": "Percu",
+      "Volume": 12
+    }
+  ],
+  "vehicules": [
+    {
+      "Id_vehicules": 1,
+      "Nom": "AA-123-BB",
+      "Volume_dispo": 4
+    },
+    {
+      "Id_vehicules": 2,
+      "Nom": "CC-456-DD",
+      "Volume_dispo": 12
+    },
+    {
+      "Id_vehicules": 3,
+      "Nom": "TR-789-XX",
+      "Volume_dispo": 28
+    },
+    {
+      "Id_vehicules": 4,
+      "Nom": "PL-321-KK",
+      "Volume_dispo": 18
+    }
+  ],
+  "config": "equilibre"
+}
+[2026-03-10 14:38:34] [FIN JSON]
+[2026-03-10 14:38:34] 
+[2026-03-10 14:38:34] [DONNEES RECUES - APRES CONSTRUCTION]
+[2026-03-10 14:38:34]   - Lieux (4 lignes):
+[2026-03-10 14:38:34]       Id_Lieux=0, Nom=DÃ©pÃ´t, HeureConcert=nan, Instruments=''
+[2026-03-10 14:38:34]       Id_Lieux=1, Nom=Cirque, HeureConcert=1080.0, Instruments='Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:38:34]       Id_Lieux=2, Nom=Hotel, HeureConcert=1080.0, Instruments='Drum Kit Complete, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:38:34]       Id_Lieux=3, Nom=Casa, HeureConcert=1080.0, Instruments='Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Basse, Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard'
+[2026-03-10 14:38:34]   - Instruments (27 lignes):
+[2026-03-10 14:38:34]       Nom       Drum Kit Complete
+Volume                  1.2
+Name: 0, dtype: object
+[2026-03-10 14:38:34]       Nom       Caisse Claire
+Volume             0.15
+Name: 1, dtype: object
+[2026-03-10 14:38:34]       Nom       Cymbales Pack
+Volume              0.3
+Name: 2, dtype: object
+[2026-03-10 14:38:34]       Nom       Guitare Ã‰lectrique
+Volume                    0.1
+Name: 3, dtype: object
+[2026-03-10 14:38:34]       Nom       Basse
+Volume     0.12
+Name: 4, dtype: object
+[2026-03-10 14:38:34]       Nom       Guitare Acoustique
+Volume                  0.15
+Name: 5, dtype: object
+[2026-03-10 14:38:34]       Nom       Ampli Guitare
+Volume              0.3
+Name: 6, dtype: object
+[2026-03-10 14:38:34]       Nom       Ampli Basse
+Volume            0.4
+Name: 7, dtype: object
+[2026-03-10 14:38:34]       Nom       Pedalboard
+Volume          0.08
+Name: 8, dtype: object
+[2026-03-10 14:38:34]       Nom       Piano
+Volume      2.5
+Name: 9, dtype: object
+[2026-03-10 14:38:34]       Nom       SynthÃ©tiseur
+Volume             0.25
+Name: 10, dtype: object
+[2026-03-10 14:38:34]       Nom       Stand Clavier
+Volume             0.15
+Name: 11, dtype: object
+[2026-03-10 14:38:34]       Nom       Orgue
+Volume      1.8
+Name: 12, dtype: object
+[2026-03-10 14:38:34]       Nom       Enceinte PA
+Volume            0.4
+Name: 13, dtype: object
+[2026-03-10 14:38:34]       Nom       Caisson de Bas
+Volume               0.6
+Name: 14, dtype: object
+[2026-03-10 14:38:34]       Nom       Table de Mixage
+Volume                0.5
+Name: 15, dtype: object
+[2026-03-10 14:38:34]       Nom       Pack Micros
+Volume            0.2
+Name: 16, dtype: object
+[2026-03-10 14:38:34]       Nom       Moniteur ScÃ¨ne
+Volume               0.15
+Name: 17, dtype: object
+[2026-03-10 14:38:34]       Nom       Moving Head
+Volume            0.3
+Name: 18, dtype: object
+[2026-03-10 14:38:34]       Nom       Barre LED
+Volume          0.4
+Name: 19, dtype: object
+[2026-03-10 14:38:34]       Nom       Gradateur
+Volume          0.5
+Name: 20, dtype: object
+[2026-03-10 14:38:34]       Nom       Truss Section
+Volume              0.8
+Name: 21, dtype: object
+[2026-03-10 14:38:34]       Nom       Flight Case
+Volume            0.2
+Name: 22, dtype: object
+[2026-03-10 14:38:34]       Nom       CÃ¢bles Box
+Volume           0.15
+Name: 23, dtype: object
+[2026-03-10 14:38:34]       Nom       Stand Rack
+Volume          0.25
+Name: 24, dtype: object
+[2026-03-10 14:38:34]       Nom       Riser Backline
+Volume               0.6
+Name: 25, dtype: object
+[2026-03-10 14:38:34]       Nom       Percu
+Volume     12.0
+Name: 26, dtype: object
+[2026-03-10 14:38:34]   - Vehicules (4 lignes):
+[2026-03-10 14:38:34]       Id_vehicules            1
+Nom             AA-123-BB
+Volume_dispo            4
+Name: 0, dtype: object
+[2026-03-10 14:38:34]       Id_vehicules            2
+Nom             CC-456-DD
+Volume_dispo           12
+Name: 1, dtype: object
+[2026-03-10 14:38:34]       Id_vehicules            3
+Nom             TR-789-XX
+Volume_dispo           28
+Name: 2, dtype: object
+[2026-03-10 14:38:34]       Id_vehicules            4
+Nom             PL-321-KK
+Volume_dispo           18
+Name: 3, dtype: object
+[2026-03-10 14:38:34] 
+[2026-03-10 14:38:34] [CATALOGUE INSTRUMENTS]
+[2026-03-10 14:38:34]   - Drum Kit Complete: 1.2 m3
+[2026-03-10 14:38:34]   - Caisse Claire: 0.15 m3
+[2026-03-10 14:38:34]   - Cymbales Pack: 0.3 m3
+[2026-03-10 14:38:34]   - Guitare Ã‰lectrique: 0.1 m3
+[2026-03-10 14:38:34]   - Basse: 0.12 m3
+[2026-03-10 14:38:34]   - Guitare Acoustique: 0.15 m3
+[2026-03-10 14:38:34]   - Ampli Guitare: 0.3 m3
+[2026-03-10 14:38:34]   - Ampli Basse: 0.4 m3
+[2026-03-10 14:38:34]   - Pedalboard: 0.08 m3
+[2026-03-10 14:38:34]   - Piano: 2.5 m3
+[2026-03-10 14:38:34]   - SynthÃ©tiseur: 0.25 m3
+[2026-03-10 14:38:34]   - Stand Clavier: 0.15 m3
+[2026-03-10 14:38:34]   - Orgue: 1.8 m3
+[2026-03-10 14:38:34]   - Enceinte PA: 0.4 m3
+[2026-03-10 14:38:34]   - Caisson de Bas: 0.6 m3
+[2026-03-10 14:38:34]   - Table de Mixage: 0.5 m3
+[2026-03-10 14:38:34]   - Pack Micros: 0.2 m3
+[2026-03-10 14:38:34]   - Moniteur ScÃ¨ne: 0.15 m3
+[2026-03-10 14:38:34]   - Moving Head: 0.3 m3
+[2026-03-10 14:38:34]   - Barre LED: 0.4 m3
+[2026-03-10 14:38:34]   - Gradateur: 0.5 m3
+[2026-03-10 14:38:34]   - Truss Section: 0.8 m3
+[2026-03-10 14:38:34]   - Flight Case: 0.2 m3
+[2026-03-10 14:38:34]   - CÃ¢bles Box: 0.15 m3
+[2026-03-10 14:38:34]   - Stand Rack: 0.25 m3
+[2026-03-10 14:38:34]   - Riser Backline: 0.6 m3
+[2026-03-10 14:38:34]   - Percu: 12.0 m3
+[2026-03-10 14:38:34] 
+[2026-03-10 14:38:34] [VOLUMES PAR LIEU]
+[2026-03-10 14:38:34]   - Lieu 0 (DÃ©pÃ´t)
+[2026-03-10 14:38:34]       Instruments (RAW): ''
+[2026-03-10 14:38:34]       Volume total: 0.0 m3
+[2026-03-10 14:38:34]   - Lieu 1 (Cirque)
+[2026-03-10 14:38:34]       Instruments (RAW): 'Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:38:34]       Volume total: 7.05 m3
+[2026-03-10 14:38:34]   - Lieu 2 (Hotel)
+[2026-03-10 14:38:34]       Instruments (RAW): 'Drum Kit Complete, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:38:34]       Volume total: 3.5999999999999996 m3
+[2026-03-10 14:38:34]   - Lieu 3 (Casa)
+[2026-03-10 14:38:34]       Instruments (RAW): 'Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Basse, Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard'
+[2026-03-10 14:38:34]       Volume total: 5.42 m3
+[2026-03-10 14:38:34] 
+[2026-03-10 14:39:34] [DIAGNOSTIQUE - DONNEES]
+[2026-03-10 14:39:34]   - Depot opening: 480 min (8h0m)
+[2026-03-10 14:39:34]   - Total volume demand: 16.07 m3
+[2026-03-10 14:39:34]   - Total vehicle capacity: 62 m3
+[2026-03-10 14:39:34]   - Ratio capacity/demand: 3.86
+[2026-03-10 14:39:34]   - Vehicle 1: capacity=4 m3
+[2026-03-10 14:39:34]   - Vehicle 2: capacity=12 m3
+[2026-03-10 14:39:34]   - Vehicle 3: capacity=28 m3
+[2026-03-10 14:39:34]   - Vehicle 4: capacity=18 m3
+[2026-03-10 14:39:34] [DIAGNOSTIQUE - LIEUX]
+[2026-03-10 14:39:34]   - Lieu 1 (Cirque): demande=7.05m3, heure_tôt=480, heure_concert=1080
+[2026-03-10 14:39:34]   - Lieu 2 (Hotel): demande=3.5999999999999996m3, heure_tôt=480, heure_concert=1080
+[2026-03-10 14:39:34]   - Lieu 3 (Casa): demande=5.42m3, heure_tôt=480, heure_concert=1080
+[2026-03-10 14:39:34] 
+[2026-03-10 14:39:34] [CONFIGURATION]
+[2026-03-10 14:39:34]   - Label: Équilibré
+[2026-03-10 14:39:34]   - Poids: Vehicules=100, Temps=1, Distance=0.5
+[2026-03-10 14:39:34] 
+[2026-03-10 14:39:34] [MODELE]
+[2026-03-10 14:39:34]   - Variables: 56
+[2026-03-10 14:39:34]   - Contraintes: 83
+[2026-03-10 14:39:34] 
+[2026-03-10 14:39:34] [RESOLUTION]
+[2026-03-10 14:39:34]   - Demarrage de la resolution...
+[2026-03-10 14:39:35]   - Resolution terminee en 0.52s
+[2026-03-10 14:39:35]   - Statut: Optimal
+[2026-03-10 14:39:35] 
+[2026-03-10 14:39:35] 
+[2026-03-10 14:39:35] ================================================================================
+[2026-03-10 14:39:35] [SOLUTION TROUVEE]
+[2026-03-10 14:39:35] ================================================================================
+[2026-03-10 14:39:35] Label: Équilibré
+[2026-03-10 14:39:35] Timestamp: 2026-03-10 14:39:35
+[2026-03-10 14:39:35] Vehicules utilises: 1
+[2026-03-10 14:39:35] Temps total: 200 minutes
+[2026-03-10 14:39:35] Distance totale: 200 km
+[2026-03-10 14:39:35] Objectif (score): 400.00
+[2026-03-10 14:39:35] 
+[2026-03-10 14:39:35] [DETAILS PAR VEHICULE]
+[2026-03-10 14:39:35]   1. TR-789-XX
+[2026-03-10 14:39:35]      Arrets: Hotel, Casa, Cirque
+[2026-03-10 14:39:35]      Temps: 200 min, Distance: 200 km
+[2026-03-10 14:39:35] ================================================================================
+[2026-03-10 14:39:35] >>> FIN DE L'OPTIMISATION - SUCCES
+[2026-03-10 14:39:35] ================================================================================
+[2026-03-10 14:39:35] 
+[2026-03-10 14:59:01] ================================================================================
+[2026-03-10 14:59:01] >>> DEBUT DE L'OPTIMISATION
+[2026-03-10 14:59:01] ================================================================================
+[2026-03-10 14:59:01] [JSON D'ENTREE - COMPLET]
+[2026-03-10 14:59:01] {
+  "lieux": [
+    {
+      "Id_Lieux": 0,
+      "Nom": "DÃ©pÃ´t",
+      "Adresse": "Av. Gustave Eiffel, 75007 Paris",
+      "lat": 48.8581265,
+      "lon": 2.2956641,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": null,
+      "Instruments": ""
+    },
+    {
+      "Id_Lieux": 1,
+      "Nom": "Cirque",
+      "Adresse": "110 Rue Amelot, 75011 Paris",
+      "lat": 48.8113,
+      "lon": 2.2616,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": 1080,
+      "Instruments": "Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Drum Kit Complete, Drum Kit Complete"
+    },
+    {
+      "Id_Lieux": 2,
+      "Nom": "Hotel",
+      "Adresse": "Pl. GÃ©rard Willaume, 77600 Chanteloup-en-Brie",
+      "lat": 48.8685,
+      "lon": 2.376,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": 1080,
+      "Instruments": "Drum Kit Complete, Drum Kit Complete, Drum Kit Complete"
+    },
+    {
+      "Id_Lieux": 3,
+      "Nom": "Casa",
+      "Adresse": "32 allÃ©e du hÃªtre, pontault-combault 77340",
+      "lat": 0,
+      "lon": 0,
+      "HeureTot": 480,
+      "HeureTard": 1380,
+      "HeureConcert": 1080,
+      "Instruments": "Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Basse, Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard"
+    }
+  ],
+  "instruments": [
+    {
+      "Nom": "Drum Kit Complete",
+      "Volume": 1.2
+    },
+    {
+      "Nom": "Caisse Claire",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Cymbales Pack",
+      "Volume": 0.3
+    },
+    {
+      "Nom": "Guitare Ã‰lectrique",
+      "Volume": 0.1
+    },
+    {
+      "Nom": "Basse",
+      "Volume": 0.12
+    },
+    {
+      "Nom": "Guitare Acoustique",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Ampli Guitare",
+      "Volume": 0.3
+    },
+    {
+      "Nom": "Ampli Basse",
+      "Volume": 0.4
+    },
+    {
+      "Nom": "Pedalboard",
+      "Volume": 0.08
+    },
+    {
+      "Nom": "Piano",
+      "Volume": 2.5
+    },
+    {
+      "Nom": "SynthÃ©tiseur",
+      "Volume": 0.25
+    },
+    {
+      "Nom": "Stand Clavier",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Orgue",
+      "Volume": 1.8
+    },
+    {
+      "Nom": "Enceinte PA",
+      "Volume": 0.4
+    },
+    {
+      "Nom": "Caisson de Bas",
+      "Volume": 0.6
+    },
+    {
+      "Nom": "Table de Mixage",
+      "Volume": 0.5
+    },
+    {
+      "Nom": "Pack Micros",
+      "Volume": 0.2
+    },
+    {
+      "Nom": "Moniteur ScÃ¨ne",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Moving Head",
+      "Volume": 0.3
+    },
+    {
+      "Nom": "Barre LED",
+      "Volume": 0.4
+    },
+    {
+      "Nom": "Gradateur",
+      "Volume": 0.5
+    },
+    {
+      "Nom": "Truss Section",
+      "Volume": 0.8
+    },
+    {
+      "Nom": "Flight Case",
+      "Volume": 0.2
+    },
+    {
+      "Nom": "CÃ¢bles Box",
+      "Volume": 0.15
+    },
+    {
+      "Nom": "Stand Rack",
+      "Volume": 0.25
+    },
+    {
+      "Nom": "Riser Backline",
+      "Volume": 0.6
+    },
+    {
+      "Nom": "Percu",
+      "Volume": 12
+    }
+  ],
+  "vehicules": [
+    {
+      "Id_vehicules": 1,
+      "Nom": "AA-123-BB",
+      "Volume_dispo": 4
+    },
+    {
+      "Id_vehicules": 2,
+      "Nom": "CC-456-DD",
+      "Volume_dispo": 12
+    },
+    {
+      "Id_vehicules": 3,
+      "Nom": "TR-789-XX",
+      "Volume_dispo": 28
+    },
+    {
+      "Id_vehicules": 4,
+      "Nom": "PL-321-KK",
+      "Volume_dispo": 18
+    }
+  ],
+  "config": "equilibre"
+}
+[2026-03-10 14:59:01] [FIN JSON]
+[2026-03-10 14:59:01] 
+[2026-03-10 14:59:01] [DONNEES RECUES - APRES CONSTRUCTION]
+[2026-03-10 14:59:01]   - Lieux (4 lignes):
+[2026-03-10 14:59:01]       Id_Lieux=0, Nom=DÃ©pÃ´t, HeureConcert=nan, Instruments=''
+[2026-03-10 14:59:01]       Id_Lieux=1, Nom=Cirque, HeureConcert=1080.0, Instruments='Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:59:01]       Id_Lieux=2, Nom=Hotel, HeureConcert=1080.0, Instruments='Drum Kit Complete, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:59:01]       Id_Lieux=3, Nom=Casa, HeureConcert=1080.0, Instruments='Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Basse, Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard'
+[2026-03-10 14:59:01]   - Instruments (27 lignes):
+[2026-03-10 14:59:01]       Nom       Drum Kit Complete
+Volume                  1.2
+Name: 0, dtype: object
+[2026-03-10 14:59:01]       Nom       Caisse Claire
+Volume             0.15
+Name: 1, dtype: object
+[2026-03-10 14:59:01]       Nom       Cymbales Pack
+Volume              0.3
+Name: 2, dtype: object
+[2026-03-10 14:59:01]       Nom       Guitare Ã‰lectrique
+Volume                    0.1
+Name: 3, dtype: object
+[2026-03-10 14:59:01]       Nom       Basse
+Volume     0.12
+Name: 4, dtype: object
+[2026-03-10 14:59:01]       Nom       Guitare Acoustique
+Volume                  0.15
+Name: 5, dtype: object
+[2026-03-10 14:59:01]       Nom       Ampli Guitare
+Volume              0.3
+Name: 6, dtype: object
+[2026-03-10 14:59:01]       Nom       Ampli Basse
+Volume            0.4
+Name: 7, dtype: object
+[2026-03-10 14:59:01]       Nom       Pedalboard
+Volume          0.08
+Name: 8, dtype: object
+[2026-03-10 14:59:01]       Nom       Piano
+Volume      2.5
+Name: 9, dtype: object
+[2026-03-10 14:59:01]       Nom       SynthÃ©tiseur
+Volume             0.25
+Name: 10, dtype: object
+[2026-03-10 14:59:01]       Nom       Stand Clavier
+Volume             0.15
+Name: 11, dtype: object
+[2026-03-10 14:59:01]       Nom       Orgue
+Volume      1.8
+Name: 12, dtype: object
+[2026-03-10 14:59:01]       Nom       Enceinte PA
+Volume            0.4
+Name: 13, dtype: object
+[2026-03-10 14:59:01]       Nom       Caisson de Bas
+Volume               0.6
+Name: 14, dtype: object
+[2026-03-10 14:59:01]       Nom       Table de Mixage
+Volume                0.5
+Name: 15, dtype: object
+[2026-03-10 14:59:01]       Nom       Pack Micros
+Volume            0.2
+Name: 16, dtype: object
+[2026-03-10 14:59:01]       Nom       Moniteur ScÃ¨ne
+Volume               0.15
+Name: 17, dtype: object
+[2026-03-10 14:59:01]       Nom       Moving Head
+Volume            0.3
+Name: 18, dtype: object
+[2026-03-10 14:59:01]       Nom       Barre LED
+Volume          0.4
+Name: 19, dtype: object
+[2026-03-10 14:59:01]       Nom       Gradateur
+Volume          0.5
+Name: 20, dtype: object
+[2026-03-10 14:59:01]       Nom       Truss Section
+Volume              0.8
+Name: 21, dtype: object
+[2026-03-10 14:59:01]       Nom       Flight Case
+Volume            0.2
+Name: 22, dtype: object
+[2026-03-10 14:59:01]       Nom       CÃ¢bles Box
+Volume           0.15
+Name: 23, dtype: object
+[2026-03-10 14:59:01]       Nom       Stand Rack
+Volume          0.25
+Name: 24, dtype: object
+[2026-03-10 14:59:01]       Nom       Riser Backline
+Volume               0.6
+Name: 25, dtype: object
+[2026-03-10 14:59:01]       Nom       Percu
+Volume     12.0
+Name: 26, dtype: object
+[2026-03-10 14:59:01]   - Vehicules (4 lignes):
+[2026-03-10 14:59:01]       Id_vehicules            1
+Nom             AA-123-BB
+Volume_dispo            4
+Name: 0, dtype: object
+[2026-03-10 14:59:01]       Id_vehicules            2
+Nom             CC-456-DD
+Volume_dispo           12
+Name: 1, dtype: object
+[2026-03-10 14:59:01]       Id_vehicules            3
+Nom             TR-789-XX
+Volume_dispo           28
+Name: 2, dtype: object
+[2026-03-10 14:59:01]       Id_vehicules            4
+Nom             PL-321-KK
+Volume_dispo           18
+Name: 3, dtype: object
+[2026-03-10 14:59:01] 
+[2026-03-10 14:59:01] [CATALOGUE INSTRUMENTS]
+[2026-03-10 14:59:01]   - Drum Kit Complete: 1.2 m3
+[2026-03-10 14:59:01]   - Caisse Claire: 0.15 m3
+[2026-03-10 14:59:01]   - Cymbales Pack: 0.3 m3
+[2026-03-10 14:59:01]   - Guitare Ã‰lectrique: 0.1 m3
+[2026-03-10 14:59:01]   - Basse: 0.12 m3
+[2026-03-10 14:59:01]   - Guitare Acoustique: 0.15 m3
+[2026-03-10 14:59:01]   - Ampli Guitare: 0.3 m3
+[2026-03-10 14:59:01]   - Ampli Basse: 0.4 m3
+[2026-03-10 14:59:01]   - Pedalboard: 0.08 m3
+[2026-03-10 14:59:01]   - Piano: 2.5 m3
+[2026-03-10 14:59:01]   - SynthÃ©tiseur: 0.25 m3
+[2026-03-10 14:59:01]   - Stand Clavier: 0.15 m3
+[2026-03-10 14:59:01]   - Orgue: 1.8 m3
+[2026-03-10 14:59:01]   - Enceinte PA: 0.4 m3
+[2026-03-10 14:59:01]   - Caisson de Bas: 0.6 m3
+[2026-03-10 14:59:01]   - Table de Mixage: 0.5 m3
+[2026-03-10 14:59:01]   - Pack Micros: 0.2 m3
+[2026-03-10 14:59:01]   - Moniteur ScÃ¨ne: 0.15 m3
+[2026-03-10 14:59:01]   - Moving Head: 0.3 m3
+[2026-03-10 14:59:01]   - Barre LED: 0.4 m3
+[2026-03-10 14:59:01]   - Gradateur: 0.5 m3
+[2026-03-10 14:59:01]   - Truss Section: 0.8 m3
+[2026-03-10 14:59:01]   - Flight Case: 0.2 m3
+[2026-03-10 14:59:01]   - CÃ¢bles Box: 0.15 m3
+[2026-03-10 14:59:01]   - Stand Rack: 0.25 m3
+[2026-03-10 14:59:01]   - Riser Backline: 0.6 m3
+[2026-03-10 14:59:01]   - Percu: 12.0 m3
+[2026-03-10 14:59:01] 
+[2026-03-10 14:59:01] [VOLUMES PAR LIEU]
+[2026-03-10 14:59:01]   - Lieu 0 (DÃ©pÃ´t)
+[2026-03-10 14:59:01]       Instruments (RAW): ''
+[2026-03-10 14:59:01]       Volume total: 0.0 m3
+[2026-03-10 14:59:01]   - Lieu 1 (Cirque)
+[2026-03-10 14:59:01]       Instruments (RAW): 'Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Ampli Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:59:01]       Volume total: 7.05 m3
+[2026-03-10 14:59:01]   - Lieu 2 (Hotel)
+[2026-03-10 14:59:01]       Instruments (RAW): 'Drum Kit Complete, Drum Kit Complete, Drum Kit Complete'
+[2026-03-10 14:59:01]       Volume total: 3.5999999999999996 m3
+[2026-03-10 14:59:01]   - Lieu 3 (Casa)
+[2026-03-10 14:59:01]       Instruments (RAW): 'Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Guitare Ã‰lectrique, Basse, Basse, Basse, Basse, Basse, Basse, Basse, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Guitare Acoustique, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Guitare, Ampli Basse, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard, Pedalboard'
+[2026-03-10 14:59:01]       Volume total: 5.42 m3
+[2026-03-10 14:59:01] 
+[2026-03-10 15:00:01] [DIAGNOSTIQUE - DONNEES]
+[2026-03-10 15:00:01]   - Depot opening: 480 min (8h0m)
+[2026-03-10 15:00:01]   - Total volume demand: 16.07 m3
+[2026-03-10 15:00:01]   - Total vehicle capacity: 62 m3
+[2026-03-10 15:00:01]   - Ratio capacity/demand: 3.86
+[2026-03-10 15:00:01]   - Vehicle 1: capacity=4 m3
+[2026-03-10 15:00:01]   - Vehicle 2: capacity=12 m3
+[2026-03-10 15:00:01]   - Vehicle 3: capacity=28 m3
+[2026-03-10 15:00:01]   - Vehicle 4: capacity=18 m3
+[2026-03-10 15:00:01] [DIAGNOSTIQUE - LIEUX]
+[2026-03-10 15:00:02]   - Lieu 1 (Cirque): demande=7.05m3, heure_tôt=480, heure_concert=1080
+[2026-03-10 15:00:02]   - Lieu 2 (Hotel): demande=3.5999999999999996m3, heure_tôt=480, heure_concert=1080
+[2026-03-10 15:00:02]   - Lieu 3 (Casa): demande=5.42m3, heure_tôt=480, heure_concert=1080
+[2026-03-10 15:00:02] 
+[2026-03-10 15:00:02] [CONFIGURATION]
+[2026-03-10 15:00:02]   - Label: Équilibré
+[2026-03-10 15:00:02]   - Poids: Vehicules=100, Temps=1, Distance=0.5
+[2026-03-10 15:00:02] 
+[2026-03-10 15:00:02] [MODELE]
+[2026-03-10 15:00:02]   - Variables: 56
+[2026-03-10 15:00:02]   - Contraintes: 83
+[2026-03-10 15:00:02] 
+[2026-03-10 15:00:02] [RESOLUTION]
+[2026-03-10 15:00:02]   - Demarrage de la resolution...
+[2026-03-10 15:00:02]   - Resolution terminee en 0.22s
+[2026-03-10 15:00:02]   - Statut: Optimal
+[2026-03-10 15:00:02] 
+[2026-03-10 15:00:02] 
+[2026-03-10 15:00:02] ================================================================================
+[2026-03-10 15:00:02] [SOLUTION TROUVEE]
+[2026-03-10 15:00:02] ================================================================================
+[2026-03-10 15:00:02] Label: Équilibré
+[2026-03-10 15:00:02] Timestamp: 2026-03-10 15:00:02
+[2026-03-10 15:00:02] Vehicules utilises: 1
+[2026-03-10 15:00:02] Temps total: 200 minutes
+[2026-03-10 15:00:02] Distance totale: 200 km
+[2026-03-10 15:00:02] Objectif (score): 400.00
+[2026-03-10 15:00:02] 
+[2026-03-10 15:00:02] [DETAILS PAR VEHICULE]
+[2026-03-10 15:00:02]   1. TR-789-XX
+[2026-03-10 15:00:02]      Arrets: Hotel, Casa, Cirque
+[2026-03-10 15:00:02]      Temps: 200 min, Distance: 200 km
+[2026-03-10 15:00:02] ================================================================================
+[2026-03-10 15:00:02] >>> FIN DE L'OPTIMISATION - SUCCES
+[2026-03-10 15:00:02] ================================================================================
+[2026-03-10 15:00:02] 

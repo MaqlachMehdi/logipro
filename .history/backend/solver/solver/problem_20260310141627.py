@@ -212,7 +212,6 @@ def build_problem(data: dict, loss_params: LossParams,time_margin:TimeMargin,rec
 
     # --- depot node ---------------------------------------------------------
     deposit_node = DepositNode(depot_data["id"])
-    deposit_node.required_volume = 0.0 #Ptêtre à chnager quand on va implémenter les ehicules virutels pour le retour au dépôt intermédiare
     deposit_node.gps_coordinates = (depot_data["lat"], depot_data["lon"])
     deposit_node.time_window = TimeWindow(
         start_minutes=depot_data["open_time_min"],

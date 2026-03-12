@@ -43,7 +43,7 @@
 
 <div id="legend">
   <h3>Vehicles &amp; Routes</h3>
-  <div class="legend-item"><span class="swatch" style="background:#984ea3"></span><div><b>PL-321-KK</b>&nbsp;<small style="color:#666">cap. 18 m³ · 5 stops</small><br><small class="route-seq">Depot → Cirque — Delivery → Casa — Delivery → Casa — Recovery → Cirque — Recovery → Depot</small></div></div><div class="legend-item"><span class="swatch" style="background:#4daf4a"></span><div><b>TR-789-XX</b>&nbsp;<small style="color:#666">cap. 28 m³ · 3 stops</small><br><small class="route-seq">Depot → Hotel — Delivery → Hotel — Recovery → Depot</small></div></div>
+  <div class="legend-item"><span class="swatch" style="background:#984ea3"></span><div><b>PL-321-KK</b>&nbsp;<small style="color:#666">cap. 18 m³ · 5 stops</small><br><small class="route-seq">Depot → Cirque — Delivery → Casa — Delivery → Casa — Recovery → Cirque — Recovery → Depot</small></div></div><div class="legend-item"><span class="swatch" style="background:#e41a1c"></span><div><b>AA-123-BB</b>&nbsp;<small style="color:#666">cap. 4 m³ · 3 stops</small><br><small class="route-seq">Depot → Hotel — Delivery → Hotel — Recovery → Depot</small></div></div>
   <div class="node-legend">
     <h3 style="margin-top:6px">Node types</h3>
     <div style="font-size:12px;line-height:2">
@@ -89,7 +89,7 @@
   }
 
   // ── Draw routes ───────────────────────────────────────────────────────────
-  var vehicleRoutes = [{"plate":"PL-321-KK","color":"#984ea3","curvature":0.003,"tooltip":"PL-321-KK  (18\u202fm\u00b3 cap.)","segments":[[[48.8581265,2.2956641],[48.8113,2.2616]],[[48.8113,2.2616],[48.801,2.2316]],[[48.801,2.2316],[48.801300000000005,2.2319]],[[48.801300000000005,2.2319],[48.811600000000006,2.2619000000000002]],[[48.811600000000006,2.2619000000000002],[48.8581265,2.2956641]]]},{"plate":"TR-789-XX","color":"#4daf4a","curvature":-0.003,"tooltip":"TR-789-XX  (28\u202fm\u00b3 cap.)","segments":[[[48.8581265,2.2956641],[48.8685,2.376]],[[48.8685,2.376],[48.8688,2.3763]],[[48.8688,2.3763],[48.8581265,2.2956641]]]}];
+  var vehicleRoutes = [{"plate":"PL-321-KK","color":"#984ea3","curvature":0.003,"tooltip":"PL-321-KK  (18\u202fm\u00b3 cap.)","segments":[[[48.8581265,2.2956641],[48.8113,2.2616]],[[48.8113,2.2616],[48.801,2.2316]],[[48.801,2.2316],[48.801300000000005,2.2319]],[[48.801300000000005,2.2319],[48.811600000000006,2.2619000000000002]],[[48.811600000000006,2.2619000000000002],[48.8581265,2.2956641]]]},{"plate":"AA-123-BB","color":"#e41a1c","curvature":-0.003,"tooltip":"AA-123-BB  (4\u202fm\u00b3 cap.)","segments":[[[48.8581265,2.2956641],[48.8685,2.376]],[[48.8685,2.376],[48.8688,2.3763]],[[48.8688,2.3763],[48.8581265,2.2956641]]]}];
 
   vehicleRoutes.forEach(function(route) {
     route.segments.forEach(function(seg) {
@@ -122,7 +122,7 @@
   });
 
   // ── Node markers ─────────────────────────────────────────────────────────
-  L.circleMarker([48.8581265,2.2956641],{radius:13,color:"#fff",weight:2,fillColor:"#333",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Depot</b><br><i style='color:#666'>Av. Gustave Eiffel, 75007 Paris</i><hr style='margin:4px 0'><b>Type:</b> Depot<br><b>Time window:</b> 08h00 \u2013 23h00<br><b>Volume:</b> \u2014<br><b>GPS:</b> 48.85813, 2.29566</div>").addTo(map);
+  L.circleMarker([48.8581265,2.2956641],{radius:13,color:"#fff",weight:2,fillColor:"#333",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Depot</b><br><i style='color:#666'>Av. Gustave Eiffel, 75007 Paris</i><hr style='margin:4px 0'><b>Type:</b> Depot<br><b>Time window:</b> 08h00 \u2013 23h00<br><b>Volume:</b> +0.00\u202fm\u00b3<br><b>GPS:</b> 48.85813, 2.29566</div>").addTo(map);
     L.circleMarker([48.8113,2.2616],{radius:10,color:"#0a4a7f",weight:2,fillColor:"#1a7abf",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Cirque \u2014 Delivery</b><br><i style='color:#666'>110 Rue Amelot, 75011 Paris</i><hr style='margin:4px 0'><b>Type:</b> Delivery (drop-off)<br><b>Time window:</b> 08h00 \u2013 16h35<br><b>Volume:</b> +7.05\u202fm\u00b3<br><b>GPS:</b> 48.81130, 2.26160</div>").addTo(map);
     L.circleMarker([48.8685,2.376],{radius:10,color:"#0a4a7f",weight:2,fillColor:"#1a7abf",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Hotel \u2014 Delivery</b><br><i style='color:#666'>Pl. Gerard Willaume, 77600 Chanteloup-en-Brie</i><hr style='margin:4px 0'><b>Type:</b> Delivery (drop-off)<br><b>Time window:</b> 08h00 \u2013 17h05<br><b>Volume:</b> +3.60\u202fm\u00b3<br><b>GPS:</b> 48.86850, 2.37600</div>").addTo(map);
     L.circleMarker([48.801,2.2316],{radius:10,color:"#0a4a7f",weight:2,fillColor:"#1a7abf",fillOpacity:0.9}).bindPopup("<div style='font-size:13px;min-width:200px'><b style='font-size:15px'>Casa \u2014 Delivery</b><br><i style='color:#666'>32 allee du hetre, pontault-combault 77340</i><hr style='margin:4px 0'><b>Type:</b> Delivery (drop-off)<br><b>Time window:</b> 08h00 \u2013 16h55<br><b>Volume:</b> +5.42\u202fm\u00b3<br><b>GPS:</b> 48.80100, 2.23160</div>").addTo(map);

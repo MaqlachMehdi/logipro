@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from backend.solver.solver import problem
 from models.trajectories import Trajectory
 from solver.problem import Problem
 from models.graph import DepositNode
 import pulp
+
 
 
 
@@ -50,33 +50,46 @@ def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem)
 
             chosen_edges_dict[plate].append((node_start_id, node_end_id))
         
-        for plate, chain in chosen_edges_dict.items(): 
-            if not chain:
+        for plate,chain in chosen_edges_dict.items(): 
+            if len(chain) == 0:
                 continue
-            # build mapping and walk from depot (robuste)
-            deposit_id = problem.deposit_node.get_id_for_pulp()
-            mapping = {}
-            for s, e in chain:
-                mapping[s] = e
-            current = deposit_id
-            visited = set()
-            arrival_node_index = []
-            departure_node_index = [deposit_id]
-            while True:
-                if current in visited:
-                    print("Cycle detected, stopping")
+
+            arrival_node_index   = []
+            departure_node_index = ["0"]
+
+
+            current_departure = "0"
+            current_arrival = None
+            
+
+            returned_to_deposit = False
+            while not returned_to_deposit:
+                found_edge = False  # Indicateur pour savoir si on a trouvé un edge valide
+
+                for edge in chain:
+                    if edge[0] == current_departure:
+                        print("Found next arrival")
+                        current_arrival = edge[1]
+                        arrival_node_index.append(current_arrival)
+
+                        current_departure = current_arrival
+                        departure_node_index.append(current_arrival)
+
+                        print("Current arrival:", current_arrival)
+
+                        if current_arrival == problem.deposit_node.get_id_for_pulp():
+                            print("Reached deposit, stopping")
+                            returned_to_deposit = True
+                            break
+
+                        found_edge = True  # On a trouvé un edge, donc on continue normalement
+                        break
+
+                # Si aucun edge n'a été trouvé, quitte la boucle pour éviter une boucle infinie
+                if not found_edge:
+                    print("No edge found for current departure, breaking loop to prevent infinite loop.")
                     break
-                visited.add(current)
-                if current not in mapping:
-                    print("No edge found for current departure:", current)
-                    break
-                nxt = mapping[current]
-                arrival_node_index.append(nxt)
-                departure_node_index.append(nxt)
-                current = nxt
-                if current == deposit_id:
-                    break
-            # build Trajectory from arrival_node_index / departure_node_index...
+            
             trajectory = Trajectory(
                 vehicle_id=plate,
                 arrival_nodes=[problem.access_node_by_pulp_id(node_id.replace("_","-")) for node_id in arrival_node_index],
@@ -98,29 +111,13 @@ def _add_loss(
 ) -> pulp.LpProblem:
     lp = problem.loss_params
     print(choose_edges.keys())
-    pulp_problem += (
-    # Distance parcourue
-    lp.alpha_distance * pulp.lpSum(
-        problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
-        * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
+    pulp_problem += lp.alpha_distance * pulp.lpSum(
+        problem.oriented_edges.distances_km[(node_start.id, node_end.id)]*choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
         for node_start in problem.all_nodes
-        for node_end in problem.all_nodes
-        for vehicule in problem.vehicles_dict.values()
+        for node_end   in problem.all_nodes
+        for vehicule   in problem.vehicles_dict.values()
         if node_start != node_end
-    )
-    
-    # # # Coût fixe par véhicule utilisé (incite à consolider les routes)
-    # # lp.alpha_vehicle * pulp.lpSum(
-    # #     vehicle_used[vehicule.id]
-    # #     for vehicule in problem.vehicles_dict.values()
-    # # )
-    # +
-    # # Capacité gaspillée au départ (incite à partir chargé)
-    # lp.alpha_capacity * pulp.lpSum(
-    #     vehicule.max_volume * vehicle_used[vehicule.id] - loads_departure_dispatch[vehicule.id]
-    #     for vehicule in problem.vehicles_dict.values()
-    # )
-)
+    )# + lp.alpha_time * pulp.lpSum(
         
 
     return pulp_problem
@@ -260,127 +257,6 @@ def _add_constraints(
                             - M * (1 - choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
                           )
                     )
-    
-    # ########## Capacity constraints ##########
-
-    # # L[v, k] = load (volume) on vehicle k upon ARRIVAL at node v
-    #Si tu veux contraindre la charge au retour au dépôt :
-    # Variable : charge au DÉPART du dépôt (différente de la charge au retour)
-    loads_departure_deposit = pulp.LpVariable.dicts(
-        "load_departure_depot",
-        [vehicule.id for vehicule in problem.vehicles_dict.values()],
-        lowBound=0,
-        cat="Continuous",
-    )
-
-    # Upper bound: load never exceeds vehicle capacity
-    # Lower bound already enforced via lowBound=0 in variable declaration
-    for node in all_nodes_except_deposit:
-        for vehicule in problem.vehicles_dict.values():
-            pulp_problem += (
-                loads_at_arrival[node.get_id_for_pulp(), vehicule.id] <= vehicule.max_volume
-            )
-    # Case of the deposit
-    for vehicule in problem.vehicles_dict.values():
-        pulp_problem += loads_departure_deposit[vehicule.id] <= vehicule.max_volume
-
-    # Load propagation between consecutive nodes (big-M linearisation):
-    #   If x[v,w,k] = 1  =>  L[w,k] = L[v,k] + demand[w]
-    # === Capacity propagation (big-M), structured like time propagation ===
-    
-    M_cap = max(vehicule.max_volume*2 for vehicule in problem.vehicles_dict.values()) + max(abs(node.required_volume)*2 for node in all_nodes_except_deposit)
-    
-    #  Propagation dépôt → premier nœud
-    #    Le véhicule PERD du volume sur un delivery (required_volume > 0)
-    #    Le véhicule GAGNE du volume sur un recovery (required_volume < 0)
-    for node_end in all_nodes_except_deposit:
-        for vehicule in problem.vehicles_dict.values():
-            demand = node_end.required_volume or 0.0  # >0 = perte, <0 = gain
-            edge = choose_edges[
-                problem.deposit_node.get_id_for_pulp(),
-                node_end.get_id_for_pulp(),
-                vehicule.id
-            ]
-            # L[node_end, k] = L[depot_départ, k] - demand  si arête active
-            pulp_problem += (
-                loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                >= loads_departure_deposit[vehicule.id] - demand
-                - M_cap * (1 - edge)
-            )
-            pulp_problem += (
-                loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                <= loads_departure_deposit[vehicule.id] - demand
-                + M_cap * (1 - edge)
-            )
-
-    # 3. Propagation nœud → nœud (hors dépôt)
-    for node_start in all_nodes_except_deposit:
-        for node_end in all_nodes_except_deposit:
-            if node_start == node_end:
-                continue
-            for vehicule in problem.vehicles_dict.values():
-                demand = node_end.required_volume or 0.0
-                edge = choose_edges[
-                    node_start.get_id_for_pulp(),
-                    node_end.get_id_for_pulp(),
-                    vehicule.id
-                ]
-                pulp_problem += (
-                    loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                    >= loads_at_arrival[node_start.get_id_for_pulp(), vehicule.id] - demand
-                    - M_cap * (1 - edge)
-                )
-                pulp_problem += (
-                    loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                    <= loads_at_arrival[node_start.get_id_for_pulp(), vehicule.id] - demand
-                    + M_cap * (1 - edge)
-                )
-
-    # 4. Propagation nœud → dépôt (retour)
-    for node_start in all_nodes_except_deposit:
-        for vehicule in problem.vehicles_dict.values():
-            edge = choose_edges[
-                node_start.get_id_for_pulp(),
-                problem.deposit_node.get_id_for_pulp(),
-                vehicule.id
-            ]
-            # Le dépôt lui-même n'a pas de demand → L[depot_retour] = L[node_start]
-            pulp_problem += (
-                loads_at_arrival[problem.deposit_node.get_id_for_pulp(), vehicule.id]
-                >= loads_at_arrival[node_start.get_id_for_pulp(), vehicule.id]
-                - M_cap * (1 - edge)
-            )
-            pulp_problem += (
-                loads_at_arrival[problem.deposit_node.get_id_for_pulp(), vehicule.id]
-                <= loads_at_arrival[node_start.get_id_for_pulp(), vehicule.id]
-                + M_cap * (1 - edge)
-            )
-
-    # 5. Conservation globale des instruments
-    #    Ce qui part du dépôt (toute la flotte) doit revenir
-    pulp_problem += (
-        pulp.lpSum(
-            loads_at_arrival[problem.deposit_node.get_id_for_pulp(), vehicule.id]
-            for vehicule in problem.vehicles_dict.values()
-        )
-        ==
-        pulp.lpSum(
-            loads_departure_deposit[vehicule.id]
-            for vehicule in problem.vehicles_dict.values()
-        )
-    )
-
-    #for v in all_nodes:
-    #     for w in all_nodes:
-    #         if v != w:
-    #             for k in vehicles:
-    #                 prob += L[w, k] >= L[v, k] + demand[w] - Q[k] * (1 - x[v, w, k])
-    #                 prob += L[w, k] <= L[v, k] + demand[w] + Q[k] * (1 - x[v, w, k])
-
-    # # Note: L[depot, k] is NOT fixed explicitly.
-    # # It represents the load upon RETURN to the depot.
-    # # The big-M propagation above guarantees consistency throughout each route.
-    # # The only natural constraints are L[depot,k] >= 0 (via lowBound) and <= Q[k].
 
 
     return pulp_problem

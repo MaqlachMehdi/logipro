@@ -108,18 +108,18 @@ def _add_loss(
         for vehicule in problem.vehicles_dict.values()
         if node_start != node_end
     )
-    
-    # # # Coût fixe par véhicule utilisé (incite à consolider les routes)
-    # # lp.alpha_vehicle * pulp.lpSum(
-    # #     vehicle_used[vehicule.id]
-    # #     for vehicule in problem.vehicles_dict.values()
-    # # )
-    # +
-    # # Capacité gaspillée au départ (incite à partir chargé)
-    # lp.alpha_capacity * pulp.lpSum(
-    #     vehicule.max_volume * vehicle_used[vehicule.id] - loads_departure_dispatch[vehicule.id]
-    #     for vehicule in problem.vehicles_dict.values()
-    # )
+    +
+    # Coût fixe par véhicule utilisé (incite à consolider les routes)
+    lp.alpha_vehicle * pulp.lpSum(
+        vehicle_used[vehicule.id]
+        for vehicule in problem.vehicles_dict.values()
+    )
+    +
+    # Capacité gaspillée au départ (incite à partir chargé)
+    lp.alpha_capacity * pulp.lpSum(
+        vehicule.max_volume * vehicle_used[vehicule.id] - loads_departure_dispatch[vehicule.id]
+        for vehicule in problem.vehicles_dict.values()
+    )
 )
         
 
@@ -280,9 +280,10 @@ def _add_constraints(
             pulp_problem += (
                 loads_at_arrival[node.get_id_for_pulp(), vehicule.id] <= vehicule.max_volume
             )
-    # Case of the deposit
+
     for vehicule in problem.vehicles_dict.values():
         pulp_problem += loads_departure_deposit[vehicule.id] <= vehicule.max_volume
+
 
     # Load propagation between consecutive nodes (big-M linearisation):
     #   If x[v,w,k] = 1  =>  L[w,k] = L[v,k] + demand[w]
@@ -290,7 +291,15 @@ def _add_constraints(
     
     M_cap = max(vehicule.max_volume*2 for vehicule in problem.vehicles_dict.values()) + max(abs(node.required_volume)*2 for node in all_nodes_except_deposit)
     
-    #  Propagation dépôt → premier nœud
+    #  Propagation de charge — CAS : dépôt → nœud
+    
+
+    # Propagation de charge — CAS : nœud → nœud (hors dépôt)
+    
+
+    #  Propagation de charge — CAS : nœud → dépôt (retour, optionnel selon ton modèle)
+    
+    # 2. Propagation dépôt → premier nœud
     #    Le véhicule PERD du volume sur un delivery (required_volume > 0)
     #    Le véhicule GAGNE du volume sur un recovery (required_volume < 0)
     for node_end in all_nodes_except_deposit:

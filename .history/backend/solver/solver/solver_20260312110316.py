@@ -284,13 +284,22 @@ def _add_constraints(
     for vehicule in problem.vehicles_dict.values():
         pulp_problem += loads_departure_deposit[vehicule.id] <= vehicule.max_volume
 
+
     # Load propagation between consecutive nodes (big-M linearisation):
     #   If x[v,w,k] = 1  =>  L[w,k] = L[v,k] + demand[w]
     # === Capacity propagation (big-M), structured like time propagation ===
     
     M_cap = max(vehicule.max_volume*2 for vehicule in problem.vehicles_dict.values()) + max(abs(node.required_volume)*2 for node in all_nodes_except_deposit)
     
-    #  Propagation dépôt → premier nœud
+    #  Propagation de charge — CAS : dépôt → nœud
+    
+
+    # Propagation de charge — CAS : nœud → nœud (hors dépôt)
+    
+
+    #  Propagation de charge — CAS : nœud → dépôt (retour, optionnel selon ton modèle)
+    
+    # 2. Propagation dépôt → premier nœud
     #    Le véhicule PERD du volume sur un delivery (required_volume > 0)
     #    Le véhicule GAGNE du volume sur un recovery (required_volume < 0)
     for node_end in all_nodes_except_deposit:
