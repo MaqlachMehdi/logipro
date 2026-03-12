@@ -24,9 +24,6 @@ _VEHICLE_COLORS = [
     "#ff7f00", "#a65628", "#f781bf", "#999999",
 ]
 
-# Curvature of Bézier arcs in degrees; cycles across vehicles.
-# Alternating sign so consecutive vehicles bend opposite ways.
-_CURVATURES = [0.003, -0.003, 0.006, -0.006, 0.009, -0.009, 0.012, -0.012]
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -77,54 +74,25 @@ def _trajectory_ordered_nodes(trajectory) -> list:
     return [trajectory.departure_nodes[0]] + list(trajectory.arrival_nodes)
 
 
-def _extract_pulp_values(result) -> tuple[dict, dict, dict, dict]:
+def _get_load_time_data(result) -> tuple[dict, dict, dict, dict, dict]:
     """
-    Extract load and time values from solved PuLP variables.
+    Get load and time data from Result object.
+    Falls back to empty dicts if data is not available.
+
     Returns:
-        loads_at_arrival: dict[(node_pulp_id, vehicle_id)] -> float
-        times_arrival: dict[(node_pulp_id, vehicle_id)] -> float
-        time_departure_deposit: dict[vehicle_id] -> float
-        loads_departure_deposit: dict[vehicle_id] -> float
+        loads_at_arrival: dict[(node_id, vehicle_id)] -> float
+        times_arrival: dict[(node_id, vehicle_id)] -> float
+        time_departure_depot: dict[vehicle_id] -> float
+        time_arrival_depot: dict[vehicle_id] -> float
+        loads_departure_depot: dict[vehicle_id] -> float
     """
-    loads_at_arrival = {}
-    times_arrival = {}
-    time_departure_deposit = {}
-    loads_departure_deposit = {}
-
-    for var in result.pulp_problem.variables():
-        name = var.name
-        val = var.varValue
-        if val is None:
-            continue
-
-        # load_at_arrival_('node_id',_'vehicle_id')
-        if name.startswith("load_at_arrival_"):
-            # Parse: load_at_arrival_('D_123',_'AA_111_AA')
-            parts = name.replace("load_at_arrival_(", "").rstrip(")").split(",_")
-            if len(parts) == 2:
-                node_id = parts[0].strip("'")
-                veh_id = parts[1].strip("'").replace("_", "-")
-                loads_at_arrival[(node_id, veh_id)] = val
-
-        # time_arrival_('node_id',_'vehicle_id')
-        elif name.startswith("time_arrival_") and not name.startswith("time_arrival_deposit"):
-            parts = name.replace("time_arrival_(", "").rstrip(")").split(",_")
-            if len(parts) == 2:
-                node_id = parts[0].strip("'")
-                veh_id = parts[1].strip("'").replace("_", "-")
-                times_arrival[(node_id, veh_id)] = val
-
-        # time_departure_deposit_'vehicle_id'
-        elif name.startswith("time_departure_deposit_"):
-            veh_id = name.replace("time_departure_deposit_", "").strip("'").replace("_", "-")
-            time_departure_deposit[veh_id] = val
-
-        # load_departure_depot_'vehicle_id'
-        elif name.startswith("load_departure_depot_"):
-            veh_id = name.replace("load_departure_depot_", "").strip("'").replace("_", "-")
-            loads_departure_deposit[veh_id] = val
-
-    return loads_at_arrival, times_arrival, time_departure_deposit, loads_departure_deposit
+    return (
+        result.loads_at_arrival or {},
+        result.times_arrival or {},
+        result.time_departure_depot or {},
+        result.time_arrival_depot or {},
+        result.loads_departure_depot or {},
+    )
 
 
 def _build_vehicle_routes(result, color_map: dict, data: dict | None) -> list[dict]:
@@ -136,16 +104,15 @@ def _build_vehicle_routes(result, color_map: dict, data: dict | None) -> list[di
     problem = result.problem
     routes  = []
 
-    # Extract load/time data from PuLP solution
-    loads_at_arrival, times_arrival, time_departure_depot, loads_departure_depot = _extract_pulp_values(result)
+    # Get load/time data from Result
+    loads_at_arrival, times_arrival, time_departure_depot, time_arrival_depot, loads_departure_depot = _get_load_time_data(result)
 
     for i, (plate, trajectory) in enumerate(result.data.items()):
         ordered = _trajectory_ordered_nodes(trajectory)
         if len(ordered) < 2:
             continue
 
-        vehicle   = problem.vehicles_dict[plate]
-        curvature = _CURVATURES[i % len(_CURVATURES)]
+        vehicle = problem.vehicles_dict[plate]
 
         segments: list[dict] = []
         for seg_idx, (node_a, node_b) in enumerate(zip(ordered[:-1], ordered[1:])):
@@ -158,36 +125,58 @@ def _build_vehicle_routes(result, color_map: dict, data: dict | None) -> list[di
             from_label = _node_label(node_a, data)
             to_label = _node_label(node_b, data)
 
-            # Get load at arrival at destination node
-            node_b_pulp_id = node_b.get_id_for_pulp().replace("-", "_")
-            load_at_dest = loads_at_arrival.get((node_b_pulp_id, plate.replace("-", "_")))
+            # Use get_id_for_pulp() for lookups (includes -D/-R suffix for delivery/recovery)
+            node_b_key = node_b.get_id_for_pulp()
+            node_a_key = node_a.get_id_for_pulp()
 
-            # Get arrival time at destination
-            if isinstance(node_b, DepositNode):
-                # For depot return, we don't have time_arrival in times_arrival dict
-                arrival_time = None
-            else:
-                arrival_time = times_arrival.get((node_b_pulp_id, plate.replace("-", "_")))
-
-            # Get departure load for first segment from depot
-            if seg_idx == 0 and isinstance(node_a, DepositNode):
-                departure_load = loads_departure_depot.get(plate.replace("-", "_"))
-            else:
-                # For intermediate departures, load = load at arrival at that node
-                node_a_pulp_id = node_a.get_id_for_pulp().replace("-", "_")
-                departure_load = loads_at_arrival.get((node_a_pulp_id, plate.replace("-", "_")))
-
-            # Distance for this edge
+            # Distance and travel time for this edge
             dist_km = problem.oriented_edges.distances_km.get((node_a.id, node_b.id))
             travel_time = problem.oriented_edges.travel_times_min.get((node_a.id, node_b.id))
+
+            # === POST-PROCESS: Compute loads and times ===
+
+            # Get arrival time at destination node B
+            if isinstance(node_b, DepositNode):
+                arrival_time_b = time_arrival_depot.get(plate)
+            else:
+                arrival_time_b = times_arrival.get((node_b_key, plate))
+
+            # Compute departure time from A = arrival_time_at_B - travel_time
+            if arrival_time_b is not None and travel_time is not None:
+                departure_time_a = arrival_time_b - travel_time
+            else:
+                departure_time_a = None
+
+            # Delta at nodes (volume change: + = pickup, - = dropoff)
+            delta_at_a = -(node_a.required_volume or 0.0) if not isinstance(node_a, DepositNode) else 0.0
+            delta_at_b = -(node_b.required_volume or 0.0) if not isinstance(node_b, DepositNode) else 0.0
+
+            # Compute transported load (what's on truck during travel A→B)
+            # Method: use load_at_arrival at B, which equals transported load (before operation at B)
+            # For depot destination: compute from last node (load after operation)
+            if isinstance(node_b, DepositNode):
+                # Going TO depot: transported = load_at_arrival[A] - A.required_volume (load after op at A)
+                load_at_arrival_a = loads_at_arrival.get((node_a_key, plate))
+                if load_at_arrival_a is not None:
+                    transported_load = load_at_arrival_a - (node_a.required_volume or 0.0)
+                else:
+                    transported_load = None
+            elif isinstance(node_a, DepositNode):
+                # Coming FROM depot: transported = load_at_arrival[B] (what arrives at B)
+                transported_load = loads_at_arrival.get((node_b_key, plate))
+            else:
+                # Normal edge: transported = load_at_arrival[B]
+                transported_load = loads_at_arrival.get((node_b_key, plate))
 
             segments.append({
                 "coords": [list(ll_a), list(ll_b)],
                 "from": from_label,
                 "to": to_label,
-                "load_at_dest": load_at_dest,
-                "departure_load": departure_load,
-                "arrival_time": arrival_time,
+                "transported_load": transported_load,
+                "delta_at_departure": delta_at_a,
+                "delta_at_arrival": delta_at_b,
+                "departure_time": departure_time_a,
+                "arrival_time": arrival_time_b,
                 "distance_km": dist_km,
                 "travel_time_min": travel_time,
                 "step": seg_idx + 1,
@@ -199,7 +188,6 @@ def _build_vehicle_routes(result, color_map: dict, data: dict | None) -> list[di
         routes.append({
             "plate":     plate,
             "color":     color_map[plate],
-            "curvature": curvature,
             "capacity":  vehicle.max_volume,
             "segments":  segments,
         })
@@ -280,32 +268,32 @@ def render_html(
             f'</div></div>'
         )
 
-    # ── Extract load/time values for node popups ─────────────────────────────
-    loads_at_arrival, times_arrival, time_departure_depot, loads_departure_depot = _extract_pulp_values(result)
+    # ── Get load/time values for node popups ──────────────────────────────────
+    loads_at_arrival, times_arrival, time_departure_depot, time_arrival_depot, loads_departure_depot = _get_load_time_data(result)
 
-    # Build a mapping: node_id -> list of (vehicle_plate, arrival_time, load_at_arrival, vehicle_color)
+    # Build a mapping: node_id -> list of visit info dicts
     node_visit_info: dict[str, list] = {}
     for plate, trajectory in result.data.items():
         ordered = _trajectory_ordered_nodes(trajectory)
         veh_color = color_map.get(plate, "#999")
         for idx, node in enumerate(ordered):
-            node_pulp_id = node.get_id_for_pulp().replace("-", "_")
-            veh_pulp_id = plate.replace("-", "_")
+            # Use get_id_for_pulp() for lookups (includes -D/-R suffix)
+            node_key = node.get_id_for_pulp()
 
             if isinstance(node, DepositNode):
                 if idx == 0:
                     # Departure from depot
-                    arr_time = time_departure_depot.get(veh_pulp_id)
-                    load = loads_departure_depot.get(veh_pulp_id)
+                    arr_time = time_departure_depot.get(plate)
+                    load = loads_departure_depot.get(plate)
                     visit_type = "Departure"
                 else:
                     # Return to depot
-                    arr_time = None  # No specific arrival time var for depot return
-                    load = loads_at_arrival.get((node_pulp_id, veh_pulp_id))
+                    arr_time = time_arrival_depot.get(plate)
+                    load = loads_at_arrival.get((node_key, plate))
                     visit_type = "Return"
             else:
-                arr_time = times_arrival.get((node_pulp_id, veh_pulp_id))
-                load = loads_at_arrival.get((node_pulp_id, veh_pulp_id))
+                arr_time = times_arrival.get((node_key, plate))
+                load = loads_at_arrival.get((node_key, plate))
                 visit_type = "Visit"
 
             if node.id not in node_visit_info:
@@ -466,29 +454,57 @@ def render_html(
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }}).addTo(map);
 
-  // ── Quadratic Bézier helper ───────────────────────────────────────────────
-  // Returns nPts+1 [lat,lon] points along the arc between p1 and p2.
-  // The control point is offset perpendicularly by `curv` degrees.
-  function bezierPoints(p1, p2, curv, nPts) {{
-    var midLat = (p1[0] + p2[0]) / 2;
-    var midLon = (p1[1] + p2[1]) / 2;
-    var dLat   = p2[0] - p1[0];
-    var dLon   = p2[1] - p1[1];
-    var len    = Math.sqrt(dLat * dLat + dLon * dLon);
+  // ── Wiggly path generator with Bézier + sinusoidal oscillation ────────────
+  // Creates a curved, oscillating path between p1 and p2 for visual separation.
+  // style object: offset, curv, freq, amp, phase
+  function wavyPath(p1, p2, style, nPts) {{
+    var dLat = p2[0] - p1[0];
+    var dLon = p2[1] - p1[1];
+    var len  = Math.sqrt(dLat * dLat + dLon * dLon);
     if (len < 1e-10) return [p1, p2];
-    // perpendicular unit vector scaled by curvature
-    var ctrlLat = midLat + (-dLon / len) * curv;
-    var ctrlLon = midLon + ( dLat / len) * curv;
+
+    // Perpendicular unit vector
+    var perpLat = -dLon / len;
+    var perpLon =  dLat / len;
+
+    // Apply base perpendicular offset to endpoints
+    var p1Off = [p1[0] + perpLat * style.offset, p1[1] + perpLon * style.offset];
+    var p2Off = [p2[0] + perpLat * style.offset, p2[1] + perpLon * style.offset];
+
+    // Bézier control point at midpoint + curvature
+    var midLat = (p1Off[0] + p2Off[0]) / 2 + perpLat * style.curv;
+    var midLon = (p1Off[1] + p2Off[1]) / 2 + perpLon * style.curv;
+
     var pts = [];
     for (var i = 0; i <= nPts; i++) {{
-      var u = i / nPts;
-      var v = 1 - u;
+      var t = i / nPts;
+      var s = 1 - t;
+
+      // Quadratic Bézier base position
+      var baseLat = s*s*p1Off[0] + 2*s*t*midLat + t*t*p2Off[0];
+      var baseLon = s*s*p1Off[1] + 2*s*t*midLon + t*t*p2Off[1];
+
+      // Sinusoidal oscillation (tapers at endpoints)
+      var envelope = Math.sin(Math.PI * t);  // 0 at ends, 1 at middle
+      var wave = style.amp * envelope * Math.sin(style.freq * t * 2 * Math.PI + style.phase);
+
       pts.push([
-        v*v*p1[0] + 2*v*u*ctrlLat + u*u*p2[0],
-        v*v*p1[1] + 2*v*u*ctrlLon + u*u*p2[1]
+        baseLat + perpLat * wave,
+        baseLon + perpLon * wave
       ]);
     }}
     return pts;
+  }}
+
+  // ── Random style generator ───────────────────────────────────────────────
+  function randomEdgeStyle() {{
+    return {{
+      offset: (Math.random() - 0.5) * 0.002,        // perpendicular shift: ±0.001
+      curv:   (Math.random() - 0.5) * 0.04,         // Bézier bulge: ±0.02 (gentler curves)
+      freq:   0.5 + Math.random() * 1.5,            // oscillation frequency: 0.5-2 cycles (slower)
+      amp:    0.0001 + Math.random() * 0.0004,      // oscillation amplitude: subtle
+      phase:  Math.random() * 2 * Math.PI           // random phase offset
+    }};
   }}
 
   // ── Helper to format time ──────────────────────────────────────────────────
@@ -506,32 +522,45 @@ def render_html(
     return load.toFixed(2) + ' m³ (' + pct + '%)';
   }}
 
+  // ── Helper to format load variation ─────────────────────────────────────
+  function formatDelta(delta) {{
+    if (delta === null || delta === undefined || Math.abs(delta) < 0.001) return '—';
+    if (delta > 0) {{
+      return '<span style="color:#4CAF50">▲ +' + delta.toFixed(2) + ' m³</span> (pickup)';
+    }} else {{
+      return '<span style="color:#2196F3">▼ ' + delta.toFixed(2) + ' m³</span> (dropoff)';
+    }}
+  }}
+
   // ── Draw routes ───────────────────────────────────────────────────────────
   var vehicleRoutes = {vehicle_routes_json};
 
   vehicleRoutes.forEach(function(route) {{
     route.segments.forEach(function(seg) {{
-      var pts  = bezierPoints(seg.coords[0], seg.coords[1], route.curvature, 48);
+      var style = randomEdgeStyle();
+      var pts = wavyPath(seg.coords[0], seg.coords[1], style, 64);
 
       // Build rich tooltip
-      var tooltipHtml = '<div style="min-width:220px">' +
+      var tooltipHtml = '<div style="min-width:260px">' +
         '<b style="font-size:13px;color:' + route.color + '">' + route.plate + '</b>' +
         ' <span style="color:#aaa">Step ' + seg.step + '</span>' +
         '<hr style="margin:4px 0;border-color:#555">' +
         '<b>From:</b> ' + seg.from + '<br>' +
+        '<span style="margin-left:12px;color:#aaa">Δ ' + formatDelta(seg.delta_at_departure) + '</span><br>' +
         '<b>To:</b> ' + seg.to + '<br>' +
+        '<span style="margin-left:12px;color:#aaa">Δ ' + formatDelta(seg.delta_at_arrival) + '</span>' +
         '<hr style="margin:4px 0;border-color:#555">' +
-        '<b>Departure load:</b> ' + formatLoad(seg.departure_load, route.capacity) + '<br>' +
-        '<b>Load at arrival:</b> ' + formatLoad(seg.load_at_dest, route.capacity) + '<br>' +
-        '<b>Arrival time:</b> ' + formatTime(seg.arrival_time) + '<br>' +
+        '<b>🚚 Transported:</b> ' + formatLoad(seg.transported_load, route.capacity) + '<br>' +
         '<hr style="margin:4px 0;border-color:#555">' +
-        '<b>Distance:</b> ' + (seg.distance_km !== null ? seg.distance_km.toFixed(1) + ' km' : '—') + '<br>' +
-        '<b>Travel time:</b> ' + (seg.travel_time_min !== null ? Math.round(seg.travel_time_min) + ' min' : '—') +
+        '<b>Departure:</b> ' + formatTime(seg.departure_time) + '<br>' +
+        '<b>Arrival:</b> ' + formatTime(seg.arrival_time) + '<br>' +
+        '<b>Travel:</b> ' + (seg.travel_time_min !== null ? Math.round(seg.travel_time_min) + ' min' : '—') +
+        ' · ' + (seg.distance_km !== null ? seg.distance_km.toFixed(1) + ' km' : '—') +
         '</div>';
 
       var line = L.polyline(pts, {{
         color:   route.color,
-        weight:  5,
+        weight:  8,
         opacity: 0.85
       }}).bindTooltip(tooltipHtml, {{sticky: true, className: 'route-tooltip'}})
         .addTo(map);
@@ -542,12 +571,12 @@ def render_html(
           offset:  '50%',
           repeat:  0,
           symbol:  L.Symbol.arrowHead({{
-            pixelSize:   14,
+            pixelSize:   20,
             polygon:     false,
             pathOptions: {{
               stroke:  true,
               color:   route.color,
-              weight:  2.5,
+              weight:  4,
               opacity: 1
             }}
           }})

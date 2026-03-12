@@ -7,10 +7,19 @@ import pulp
 
 
 @dataclass
-class Result : 
-    data : dict[str,Trajectory] 
-    problem: Problem 
-    pulp_problem: pulp.LpProblem    
+class Result:
+    data: dict[str, Trajectory]
+    problem: Problem
+    pulp_problem: pulp.LpProblem
+
+    # Load/time data extracted from PuLP solution for visualization
+    # Keys use original IDs (with dashes), matching vehicle.id and node.id
+    loads_at_arrival: dict[tuple[str, str], float] | None = None       # (node_id, vehicle_id) -> load m³
+    times_arrival: dict[tuple[str, str], float] | None = None          # (node_id, vehicle_id) -> minutes
+    time_departure_depot: dict[str, float] | None = None               # vehicle_id -> minutes
+    time_arrival_depot: dict[str, float] | None = None                 # vehicle_id -> minutes
+    loads_departure_depot: dict[str, float] | None = None              # vehicle_id -> load m³
+
     def __post_init__(self):
         if not self.data:
             raise ValueError("Result data is empty.")
@@ -24,7 +33,96 @@ class Result :
             for arrival_node, departure_node in zip(trajectory.arrival_nodes, trajectory.departure_nodes):
                 return_str += f"        Departure from {departure_node.id} (type: {departure_node.__class__.__name__}) ------> Arrival at {arrival_node.id} (type: {arrival_node.__class__.__name__})\n"
         return return_str
+
+    def get_load_at_arrival(self, node_id: str, vehicle_id: str) -> float | None:
+        """Get the vehicle load upon arrival at a node."""
+        if self.loads_at_arrival is None:
+            return None
+        return self.loads_at_arrival.get((node_id, vehicle_id))
+
+    def get_arrival_time(self, node_id: str, vehicle_id: str) -> float | None:
+        """Get arrival time at node (minutes from midnight)."""
+        if self.times_arrival is None:
+            return None
+        return self.times_arrival.get((node_id, vehicle_id))
+
+    def get_depot_departure_load(self, vehicle_id: str) -> float | None:
+        """Get vehicle load when departing from depot."""
+        if self.loads_departure_depot is None:
+            return None
+        return self.loads_departure_depot.get(vehicle_id)
+
+    def get_depot_departure_time(self, vehicle_id: str) -> float | None:
+        """Get departure time from depot."""
+        if self.time_departure_depot is None:
+            return None
+        return self.time_departure_depot.get(vehicle_id)
+
+    def get_depot_arrival_time(self, vehicle_id: str) -> float | None:
+        """Get arrival time back at depot."""
+        if self.time_arrival_depot is None:
+            return None
+        return self.time_arrival_depot.get(vehicle_id)
       
+
+
+def _extract_load_time_data(pulp_problem: pulp.LpProblem) -> tuple[dict, dict, dict, dict, dict]:
+    """
+    Extract load and time values from solved PuLP variables.
+
+    Returns:
+        loads_at_arrival: dict[(node_id, vehicle_id), float]
+        times_arrival: dict[(node_id, vehicle_id), float]
+        time_departure_depot: dict[vehicle_id, float]
+        time_arrival_depot: dict[vehicle_id, float]
+        loads_departure_depot: dict[vehicle_id, float]
+
+    All IDs are converted back to original format (dashes instead of underscores).
+    """
+    loads_at_arrival = {}
+    times_arrival = {}
+    time_departure_depot = {}
+    time_arrival_depot = {}
+    loads_departure_depot = {}
+
+    for var in pulp_problem.variables():
+        name = var.name
+        val = var.varValue
+        if val is None:
+            continue
+
+        # load_at_arrival_('node_id',_'vehicle_id')
+        if name.startswith("load_at_arrival_("):
+            parts = name.replace("load_at_arrival_(", "").rstrip(")").split(",_")
+            if len(parts) == 2:
+                node_id = parts[0].strip("'").replace("_", "-")
+                veh_id = parts[1].strip("'").replace("_", "-")
+                loads_at_arrival[(node_id, veh_id)] = val
+
+        # time_arrival_('node_id',_'vehicle_id')
+        elif name.startswith("time_arrival_(") and not name.startswith("time_arrival_deposit"):
+            parts = name.replace("time_arrival_(", "").rstrip(")").split(",_")
+            if len(parts) == 2:
+                node_id = parts[0].strip("'").replace("_", "-")
+                veh_id = parts[1].strip("'").replace("_", "-")
+                times_arrival[(node_id, veh_id)] = val
+
+        # time_departure_deposit_'vehicle_id'
+        elif name.startswith("time_departure_deposit_"):
+            veh_id = name.replace("time_departure_deposit_", "").strip("'").replace("_", "-")
+            time_departure_depot[veh_id] = val
+
+        # time_arrival_deposit_'vehicle_id'
+        elif name.startswith("time_arrival_deposit_"):
+            veh_id = name.replace("time_arrival_deposit_", "").strip("'").replace("_", "-")
+            time_arrival_depot[veh_id] = val
+
+        # load_departure_depot_'vehicle_id'
+        elif name.startswith("load_departure_depot_"):
+            veh_id = name.replace("load_departure_depot_", "").strip("'").replace("_", "-")
+            loads_departure_depot[veh_id] = val
+
+    return loads_at_arrival, times_arrival, time_departure_depot, time_arrival_depot, loads_departure_depot
 
 
 def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem) -> Result:
@@ -32,8 +130,8 @@ def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem)
     data = dict()
 
     chosen_edges_dict = dict()
-    
-    for plate in problem.vehicles_dict.keys(): 
+
+    for plate in problem.vehicles_dict.keys():
         chosen_edges_dict[plate] = list()
     print(f"Initialized : {chosen_edges_dict}")
 
@@ -45,10 +143,9 @@ def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem)
             node_start_id = var_name.split(',')[0].split("'")[1]
             node_end_id = var_name.split(',')[1].split("'")[1]
 
-
             chosen_edges_dict[plate].append((node_start_id, node_end_id))
-        
-        for plate, chain in chosen_edges_dict.items(): 
+
+        for plate, chain in chosen_edges_dict.items():
             if not chain:
                 continue
             # build mapping and walk from depot (robuste)
@@ -62,11 +159,11 @@ def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem)
             departure_node_index = [deposit_id]
             while True:
                 if current in visited:
-                    print("Cycle detected, stopping")
+                    # print("Cycle detected, stopping")
                     break
                 visited.add(current)
                 if current not in mapping:
-                    print("No edge found for current departure:", current)
+                    # print("No edge found for current departure:", current)
                     break
                 nxt = mapping[current]
                 arrival_node_index.append(nxt)
@@ -82,7 +179,20 @@ def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem)
             )
             data[plate] = trajectory
 
-    return Result(data=data, problem=problem, pulp_problem=pulp_problem)
+    # Extract load and time data from PuLP solution
+    loads_at_arrival, times_arrival, time_departure_depot, time_arrival_depot, loads_departure_depot = \
+        _extract_load_time_data(pulp_problem)
+
+    return Result(
+        data=data,
+        problem=problem,
+        pulp_problem=pulp_problem,
+        loads_at_arrival=loads_at_arrival,
+        times_arrival=times_arrival,
+        time_departure_depot=time_departure_depot,
+        time_arrival_depot=time_arrival_depot,
+        loads_departure_depot=loads_departure_depot,
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -101,7 +211,8 @@ def _add_constraints(
     time_departure_deposit  : dict[tuple[str], pulp.LpVariable],
 
     loads_at_arrival: dict[tuple[str, str], pulp.LpVariable],
-    loads_departure_deposit : dict[tuple[str],pulp.LpVariable]
+    loads_departure_deposit : dict[tuple[str],pulp.LpVariable],
+    is_vehicule_active: dict[str, pulp.LpVariable],
 ) -> pulp.LpProblem:
     print(f"At reception : {time_arrival_deposit}\n {50*'-'}")
     all_nodes = problem.all_nodes
@@ -180,8 +291,28 @@ def _add_constraints(
         print("=================================")
         pulp_problem += time_arrival_deposit[vehicule.id] >= problem.deposit_node.time_window.start_minutes
         pulp_problem += time_arrival_deposit[vehicule.id] <= problem.deposit_node.time_window.end_minutes
+        # Vehicle cannot depart before depot opens
+        pulp_problem += time_departure_deposit[vehicule.id] >= problem.deposit_node.time_window.start_minutes
 
+    # ===   ===     ===     ===     VEHICLE ACTIVATION CONSTRAINTS
     M = 1600  # big-M > max possible journey duration (minutes)
+    deposit_pulp_id = problem.deposit_node.get_id_for_pulp()
+    all_nodes_for_activation = problem.delivery_nodes + problem.recovery_nodes
+
+    for vehicule in problem.vehicles_dict.values():
+        # Link is_active to edges: if any edge FROM depot is chosen, vehicle is active
+        for node in all_nodes_for_activation:
+            edge_key = (deposit_pulp_id, node.get_id_for_pulp(), vehicule.id)
+            if edge_key in choose_edges:
+                pulp_problem += is_vehicule_active[vehicule.id] >= choose_edges[edge_key]
+
+        # If vehicle is inactive, force arrival = departure (duration = 0)
+        # arrival <= departure + M * is_active
+        # arrival >= departure - M * is_active
+        pulp_problem += time_arrival_deposit[vehicule.id] <= time_departure_deposit[vehicule.id] + M * is_vehicule_active[vehicule.id]
+        pulp_problem += time_arrival_deposit[vehicule.id] >= time_departure_deposit[vehicule.id] - M * is_vehicule_active[vehicule.id]
+
+    
 
 
     # Time propagation between consecutive nodes
@@ -263,12 +394,12 @@ def _add_constraints(
             # L[node_end, k] = L[depot_départ, k] - demand  si arête active
             pulp_problem += (
                 loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                >= loads_departure_deposit[vehicule.id] - demand
+                >= loads_departure_deposit[vehicule.id]
                 - M_cap * (1 - edge)
             )
             pulp_problem += (
                 loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                <= loads_departure_deposit[vehicule.id] - demand
+                <= loads_departure_deposit[vehicule.id]
                 + M_cap * (1 - edge)
             )
 
@@ -364,6 +495,7 @@ def _add_constraints(
 
 
 def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
+    #VARIABLES
     all_nodes = problem.all_nodes
     all_nodes_except_deposit = problem.delivery_nodes + problem.recovery_nodes
     vehicules = list(problem.vehicles_dict.values())
@@ -425,12 +557,15 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
         cat="Continuous",
     )
 
+    # ===   ===     ===     ===     VEHICLE ACTIVATION
+    is_vehicule_active = pulp.LpVariable.dicts(
+        "is_vehicule_active",
+        [vehicule.id for vehicule in vehicules],
+        cat="Binary",
+    )
+
     pulp_problem = pulp.LpProblem(problem.name, pulp.LpMinimize)
     
-    #===    ===     ===     ===     SET UP LOSS
-    loss_function = problem.loss_function
-    pulp_problem = loss_function.set_up_loss(
-        pulp_problem=pulp_problem,problem=problem,choose_edges=choose_edges,)
     
     #===    ===     ===     ===     SET UP CONSTRAINTS
     pulp_problem = _add_constraints(
@@ -445,7 +580,15 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
         #   LOADS
         loads_at_arrival=loads_at_arrival,
         loads_departure_deposit=loads_departure_deposit,
+        #   ACTIVATION
+        is_vehicule_active=is_vehicule_active,
     )
+
+    #===    ===     ===     ===     OBJECTIVE
+    #===    ===     ===     ===     SET UP LOSS
+    loss_function = problem.loss_function
+    pulp_problem = loss_function.set_up_loss(
+        pulp_problem=pulp_problem,problem=problem,choose_edges=choose_edges,)
 
     return pulp_problem, choose_edges
 

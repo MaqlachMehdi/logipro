@@ -28,10 +28,18 @@ class BaselineLoss(LossFunction):
             pulp_problem: pulp.LpProblem,
             problem:      Problem,
             choose_edges: dict,)-> pulp.LpProblem:
-        
+
+        # Objective: minimize total active time (arrival - departure for each vehicle)
+        # Inactive vehicles have arrival = departure (enforced by constraints in lip_solver.py)
+        # so their contribution is 0
         pulp_problem += (
-        # Distance parcourue
-            self.alpha_distance * pulp.lpSum(
+            + self.alpha_time * pulp.lpSum(
+                pulp_problem.variablesDict()[f"time_arrival_deposit_{vehicule.id.replace('-', '_')}"]
+                - pulp_problem.variablesDict()[f"time_departure_deposit_{vehicule.id.replace('-', '_')}"]
+                for vehicule in problem.vehicles_dict.values()
+            )
+
+            + self.alpha_distance * pulp.lpSum(
                 problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
                 * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
                 for node_start in problem.all_nodes
@@ -40,7 +48,4 @@ class BaselineLoss(LossFunction):
                 if node_start != node_end
             )
         )
-        # Temps de parcours
-        
-
         return pulp_problem
