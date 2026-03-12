@@ -1,13 +1,11 @@
 import json
 from time import time_ns
 import pulp
-from solver.models.graph import DepositNode, DeliveryNode, Node, OrientedEdges, RecoveryNode, TimeWindow
-from solver.models.vehicules import Vehicle
-from solver.models.trajectories import Trajectory
 
 
 # import solver 
-from solver.solver.problem import LossParams, Problem,TimeMargin,build_problem
+from solver.solver.problem import Problem,TimeMargin,build_problem
+from solver.solver.loss_functions import BaselineLoss
 from solver.solver.lip_solver import build_pulp_problem
 
 DEBUG          = 0
@@ -27,9 +25,9 @@ if __name__ == "__main__":
         data = json.load(f)
 
     # 2. Build the domain problem (nodes, edges, vehicles)
-    loss_params = LossParams(alpha_time=1.0, alpha_distance=1.0)
+    loss_function = BaselineLoss(alpha_time=1.0, alpha_distance=1.0, alpha_load=1.0)
     time_margin = TimeMargin(before_concert=MARGIN_BEFORE_CONCERT, after_concert=MARGIN_AFTER_CONCERT, before_closing=MARGIN_BEFORE_CLOSING)
-    problem     = build_problem(data, loss_params, time_margin, recall_api=RECALL_MAP_API)
+    problem     = build_problem(data, loss_function, time_margin, recall_api=RECALL_MAP_API)
 
     print(problem)
 

@@ -89,39 +89,6 @@ def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem)
 # PuLP problem builder
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _add_loss(
-    pulp_problem: pulp.LpProblem,
-    problem:      Problem,
-    choose_edges: dict,
-) -> pulp.LpProblem:
-    lp = problem.loss_params
-    pulp_problem += (
-    # Distance parcourue
-    lp.alpha_distance * pulp.lpSum(
-        problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
-        * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
-        for node_start in problem.all_nodes
-        for node_end in problem.all_nodes
-        for vehicule in problem.vehicles_dict.values()
-        if node_start != node_end
-    )
-    
-    # # # Coût fixe par véhicule utilisé (incite à consolider les routes)
-    # # lp.alpha_vehicle * pulp.lpSum(
-    # #     vehicle_used[vehicule.id]
-    # #     for vehicule in problem.vehicles_dict.values()
-    # # )
-    # +
-    # # Capacité gaspillée au départ (incite à partir chargé)
-    # lp.alpha_capacity * pulp.lpSum(
-    #     vehicule.max_volume * vehicle_used[vehicule.id] - loads_departure_dispatch[vehicule.id]
-    #     for vehicule in problem.vehicles_dict.values()
-    # )
-)
-        
-
-    return pulp_problem
-
 
 def _add_constraints(
     pulp_problem    : pulp.LpProblem,
@@ -459,7 +426,13 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
     )
 
     pulp_problem = pulp.LpProblem(problem.name, pulp.LpMinimize)
-    pulp_problem = _add_loss(pulp_problem, problem, choose_edges)
+    
+    #===    ===     ===     ===     SET UP LOSS
+    loss_function = problem.loss_function
+    pulp_problem = loss_function.set_up_loss(
+        pulp_problem=pulp_problem,problem=problem,choose_edges=choose_edges,)
+    
+    #===    ===     ===     ===     SET UP CONSTRAINTS
     pulp_problem = _add_constraints(
         pulp_problem=pulp_problem,
         problem=problem,

@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
 from solver.models.graph import DepositNode, DeliveryNode, Node, OrientedEdges, RecoveryNode, TimeWindow
 
+if TYPE_CHECKING:
+    from solver.solver.loss_functions import LossFunction
 
-@dataclass
-class LossParams:
-    alpha_time:     float
-    alpha_distance: float
+# @dataclass
+# class LossParams:
+#     alpha_time:     float
+#     alpha_distance: float
 
 @dataclass
 class TimeMargin:
@@ -21,8 +27,9 @@ class Problem:
     recovery_nodes:  list[RecoveryNode]
     oriented_edges:  OrientedEdges
     vehicles_dict:   dict          # plate -> Vehicle
-    loss_params:     LossParams
     time_margin:    TimeMargin
+
+    loss_function: LossFunction
 
     def health_check(self):
         if len(self.delivery_nodes) != len(self.recovery_nodes):
@@ -64,7 +71,7 @@ class Problem:
         lines = [
             sep,
             f"  PROBLEM : {self.name}",
-            f"  Loss    : α_time={self.loss_params.alpha_time}  α_dist={self.loss_params.alpha_distance}",
+            f"  Loss    : {self.loss_function.name}",
             f"  Nodes   : {self.n_of_nodes}  ({self.number_of_locations} venues × 2 + depot)",
             f"  Vehicles: {len(self.vehicles_dict)}",
             sep,
@@ -188,14 +195,13 @@ def _compute_location_volume(location: dict, vol_lookup: dict) -> float:
     return sum(vol_lookup.get(item, 0.0) for item in items)
 
 
-def build_problem(data: dict, loss_params: LossParams,time_margin:TimeMargin,recall_api:bool) -> Problem:
+def build_problem(data: dict, loss_function: LossFunction,time_margin:TimeMargin,recall_api:bool) -> Problem:
     """
     Build a Problem from a data dict matching the vrppd_data.json schema.
 
     Parameters
     ----------
     data        : dict loaded from vrppd_data.json
-    loss_params : optional
     """
 
 
@@ -271,6 +277,7 @@ def build_problem(data: dict, loss_params: LossParams,time_margin:TimeMargin,rec
         recovery_nodes=recovery_nodes,
         oriented_edges=oriented_edges,
         vehicles_dict=vehicles_dict,
-        loss_params=loss_params,
         time_margin=time_margin,
+
+        loss_function=loss_function,
     )

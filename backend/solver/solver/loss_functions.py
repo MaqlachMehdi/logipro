@@ -1,0 +1,45 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+import pulp
+
+if TYPE_CHECKING:
+    from solver.solver.problem import Problem
+
+class LossFunction:
+    def __init__(self, name: str):
+        self.name = name
+    
+class BaselineLoss(LossFunction):
+    def __init__(self,
+                alpha_time      :float,
+                alpha_distance  :float,
+                alpha_load      :float,
+                ):
+        super().__init__("baseline_loss")
+
+        self.alpha_time = alpha_time
+        self.alpha_distance = alpha_distance
+        self.alpha_load = alpha_load
+
+
+    def set_up_loss(self,
+            pulp_problem: pulp.LpProblem,
+            problem:      Problem,
+            choose_edges: dict,)-> pulp.LpProblem:
+        
+        pulp_problem += (
+        # Distance parcourue
+            self.alpha_distance * pulp.lpSum(
+                problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
+                * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
+                for node_start in problem.all_nodes
+                for node_end in problem.all_nodes
+                for vehicule in problem.vehicles_dict.values()
+                if node_start != node_end
+            )
+        )
+        # Temps de parcours
+
+        return pulp_problem
