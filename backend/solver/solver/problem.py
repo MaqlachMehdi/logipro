@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from models.graph import DepositNode, DeliveryNode, Node, OrientedEdges, RecoveryNode, TimeWindow
+from solver.models.graph import DepositNode, DeliveryNode, Node, OrientedEdges, RecoveryNode, TimeWindow
 
 
 @dataclass
@@ -178,8 +178,8 @@ class Problem:
 # Problem builder
 # ──────────────────────────────────────────────────────────────────────────────
 
-from models.graph import make_oriented_edges_cached
-from models.vehicules import Vehicle
+from solver.models.graph import make_oriented_edges_cached
+from solver.models.vehicules import Vehicle
 
 def _compute_location_volume(location: dict, vol_lookup: dict) -> float:
     """Sum the volume of all instruments listed for a location."""

@@ -16,7 +16,7 @@ Future enrichments (times, volumes, loads) are read directly from the
 
 import json
 
-from models.graph import DepositNode, DeliveryNode, RecoveryNode
+from solver.models.graph import DepositNode, DeliveryNode, RecoveryNode
 
 # One color per vehicle (cycles if more than 8 vehicles)
 _VEHICLE_COLORS = [

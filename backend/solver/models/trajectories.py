@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from models.graph import Node
+from solver.models.graph import Node
 @dataclass 
 class Trajectory:
     vehicle_id: str

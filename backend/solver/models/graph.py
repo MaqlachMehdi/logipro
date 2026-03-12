@@ -90,7 +90,7 @@ class RecoveryNode(Node):
 
 
 
-from utils.geo_api import osrm_time_distance
+from solver.utils.geo_api import osrm_time_distance
 from tqdm import tqdm
 from time import time_ns
 def make_oriented_edges(

@@ -1,14 +1,14 @@
 import json
 from time import time_ns
 import pulp
-from models.graph import DepositNode, DeliveryNode, Node, OrientedEdges, RecoveryNode, TimeWindow
-from models.vehicules import Vehicle
-from models.trajectories import Trajectory
+from solver.models.graph import DepositNode, DeliveryNode, Node, OrientedEdges, RecoveryNode, TimeWindow
+from solver.models.vehicules import Vehicle
+from solver.models.trajectories import Trajectory
 
 
 # import solver 
-from solver.problem import LossParams, Problem,TimeMargin,build_problem
-from solver.solver import build_pulp_problem
+from solver.solver.problem import LossParams, Problem,TimeMargin,build_problem
+from solver.solver.lip_solver import build_pulp_problem
 
 DEBUG          = 0
 RECALL_MAP_API = 0   # set to 1 to force fresh API calls and overwrite the cache
@@ -19,7 +19,7 @@ MARGIN_AFTER_CONCERT   = 20   # possible concert delay
 MARGIN_BEFORE_CLOSING  = 30   # cannot arrive too close to closing time
 if __name__ == "__main__":
     import os as _os
-    from visualize import render_html
+    from solver.visualize import render_html
 
     # 1. Load data from JSON
     data_path = _os.path.join(_os.path.dirname(__file__), "vrppd_data.json")

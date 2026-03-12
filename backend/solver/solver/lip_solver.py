@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from backend.solver.solver import problem
-from models.trajectories import Trajectory
-from solver.problem import Problem
-from models.graph import DepositNode
+from solver.solver.problem import Problem
+from solver.models.trajectories import Trajectory
+from solver.models.graph import DepositNode
 import pulp
 
 
@@ -28,7 +27,6 @@ class Result :
       
 
 
-from models.trajectories import Trajectory
 def make_result_from_pulp_result(pulp_problem: pulp.LpProblem, problem: Problem) -> Result:
     chosen_edges = {var.name: var.varValue for var in pulp_problem.variables() if var.name.startswith("e_")}
     data = dict()
