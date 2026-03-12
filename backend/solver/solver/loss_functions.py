@@ -41,5 +41,6 @@ class BaselineLoss(LossFunction):
             )
         )
         # Temps de parcours
+        
 
         return pulp_problem
