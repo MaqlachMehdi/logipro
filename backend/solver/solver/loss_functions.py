@@ -29,9 +29,12 @@ class BaselineLoss(LossFunction):
             problem:      Problem,
             choose_edges: dict,)-> pulp.LpProblem:
 
+        
+
         # Objective: minimize total active time (arrival - departure for each vehicle)
         # Inactive vehicles have arrival = departure (enforced by constraints in lip_solver.py)
         # so their contribution is 0
+
         pulp_problem += (
             + self.alpha_time * pulp.lpSum(
                 pulp_problem.variablesDict()[f"time_arrival_deposit_{vehicule.id.replace('-', '_')}"]
@@ -48,4 +51,74 @@ class BaselineLoss(LossFunction):
                 if node_start != node_end
             )
         )
+        return pulp_problem
+
+
+    
+class MinTheMaxUseTime(LossFunction):
+    def __init__(self,):
+        super().__init__("loss_minimise_the_max_usetime")
+    def set_up_loss(self,
+            pulp_problem: pulp.LpProblem,
+            problem:      Problem,
+            choose_edges: dict,)-> pulp.LpProblem:
+
+        
+
+        # Objective: minimize total active time (arrival - departure for each vehicle)
+        # Inactive vehicles have arrival = departure (enforced by constraints in lip_solver.py)
+        # so their contribution is 0
+
+        max_use_time = pulp.LpVariable("max_use_time", lowBound=0, cat="Continuous")
+        # ADDS LINEAR CONSTRAINS max_use_time >= time_arrival_deposit - time_departure_deposit for each vehicle
+        for vehicule in problem.vehicles_dict.values():
+            pulp_problem += (
+                max_use_time >= pulp_problem.variablesDict()[f"time_arrival_deposit_{vehicule.id.replace('-', '_')}"]
+                - pulp_problem.variablesDict()[f"time_departure_deposit_{vehicule.id.replace('-', '_')}"]
+            )
+        # LOSS 
+        pulp_problem +=  max_use_time
+
+        return pulp_problem
+
+
+class MixedUsedTimeAndTotalDist(LossFunction):
+    def __init__(
+            self,
+            alpha_time      :float,
+            alpha_distance  :float,
+            ):
+        super().__init__("loss_minimise_the_max_usetime")
+        self.alpha_time = alpha_time
+        self.alpha_distance = alpha_distance
+    def set_up_loss(self,
+            pulp_problem: pulp.LpProblem,
+            problem:      Problem,
+            choose_edges: dict,)-> pulp.LpProblem:
+
+        
+
+        typical_distance = problem.oriented_edges.get_distance_frobenius_norm()
+        better_min_max_time = problem.oriented_edges.ideal_min_max_time()
+
+        max_use_time = pulp.LpVariable("max_use_time", lowBound=0, cat="Continuous")
+        # ADDS LINEAR CONSTRAINS max_use_time >= time_arrival_deposit - time_departure_deposit for each vehicle
+        for vehicule in problem.vehicles_dict.values():
+            pulp_problem += (
+                max_use_time >= pulp_problem.variablesDict()[f"time_arrival_deposit_{vehicule.id.replace('-', '_')}"]
+                - pulp_problem.variablesDict()[f"time_departure_deposit_{vehicule.id.replace('-', '_')}"]
+            )
+        # LOSS 
+        pulp_problem +=  (
+            max_use_time / better_min_max_time * self.alpha_time 
+            + pulp.lpSum(
+                problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
+                * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
+                for node_start in problem.all_nodes
+                for node_end in problem.all_nodes
+                for vehicule in problem.vehicles_dict.values()
+                if node_start != node_end
+            ) / typical_distance * self.alpha_distance
+        )
+
         return pulp_problem

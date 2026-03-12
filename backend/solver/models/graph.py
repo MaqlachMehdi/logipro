@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import hashlib
 import os
 import pickle
-
+from math import sqrt
 @dataclass
 class OrientedEdges:
     distances_km:      dict  # (node_id_from, node_id_to) -> float
@@ -17,6 +17,20 @@ class OrientedEdges:
             lines.append(f"({i} --> {j}) : {d:.0f} min")
         return "\n".join(lines)
 
+    def get_distance_frobenius_norm(self) -> float:
+        """Return a typical total distance for the problem, used for normalizing the loss."""
+        total = 0.0
+        for node_start_index in range(0, len(self.distances_km.keys())):
+            for node_end_index in range(0, len(self.distances_km.keys())):
+                if node_start_index != node_end_index:
+                    total += self.distances_km.get((node_start_index, node_end_index), 0.0)**2
+        return sqrt(total) / len(self.distances_km.keys())
+
+    def ideal_min_max_time(self):
+        result = 0 
+        for end_id in range(1,len(self.travel_times_min.keys())):
+            result = max(result, self.travel_times_min.get((0, end_id), 0.0)) # distance from deposit to any node
+        return result * 2 # round trip
 
 @dataclass
 class TimeWindow:
