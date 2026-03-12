@@ -95,7 +95,6 @@ def _add_loss(
     choose_edges: dict,
 ) -> pulp.LpProblem:
     lp = problem.loss_params
-    print(choose_edges.keys())
     pulp_problem += (
     # Distance parcourue
     lp.alpha_distance * pulp.lpSum(
@@ -135,6 +134,7 @@ def _add_constraints(
     time_departure_deposit  : dict[tuple[str], pulp.LpVariable],
 
     loads_at_arrival: dict[tuple[str, str], pulp.LpVariable],
+    loads_departure_deposit : dict[tuple[str],pulp.LpVariable]
 ) -> pulp.LpProblem:
     print(f"At reception : {time_arrival_deposit}\n {50*'-'}")
     all_nodes = problem.all_nodes
@@ -262,15 +262,6 @@ def _add_constraints(
     # ########## Capacity constraints ##########
 
     # # L[v, k] = load (volume) on vehicle k upon ARRIVAL at node v
-    #Si tu veux contraindre la charge au retour au dépôt :
-    # Variable : charge au DÉPART du dépôt (différente de la charge au retour)
-    loads_departure_deposit = pulp.LpVariable.dicts(
-        "load_departure_depot",
-        [vehicule.id for vehicule in problem.vehicles_dict.values()],
-        lowBound=0,
-        cat="Continuous",
-    )
-
     # Upper bound: load never exceeds vehicle capacity
     # Lower bound already enforced via lowBound=0 in variable declaration
     for node in all_nodes_except_deposit:
@@ -286,9 +277,12 @@ def _add_constraints(
     #   If x[v,w,k] = 1  =>  L[w,k] = L[v,k] + demand[w]
     # === Capacity propagation (big-M), structured like time propagation ===
     
-    M_cap = max(vehicule.max_volume*2 for vehicule in problem.vehicles_dict.values()) + max(abs(node.required_volume)*2 for node in all_nodes_except_deposit)
+    M_cap = (
+        max(vehicule.max_volume*2 for vehicule in problem.vehicles_dict.values()) 
+        + max(abs(node.required_volume)*2 for node in all_nodes_except_deposit)
+        )
     
-    #  Propagation dépôt → premier nœud
+    #  Propagation dépôt → premier nœud (PREMIER TRAJECT)
     #    Le véhicule PERD du volume sur un delivery (required_volume > 0)
     #    Le véhicule GAGNE du volume sur un recovery (required_volume < 0)
     for node_end in all_nodes_except_deposit:
@@ -317,21 +311,39 @@ def _add_constraints(
             if node_start == node_end:
                 continue
             for vehicule in problem.vehicles_dict.values():
-                demand = node_end.required_volume or 0.0
+                
+
+                load_at_departure_previous = loads_at_arrival[node_start.get_id_for_pulp(), vehicule.id] - node_start.required_volume
+
+                demand_next = node_end.required_volume or 0.0
+
                 edge = choose_edges[
                     node_start.get_id_for_pulp(),
                     node_end.get_id_for_pulp(),
                     vehicule.id
                 ]
+
+                # load_departure-previous == load_arrival-next 
                 pulp_problem += (
-                    loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                    >= loads_at_arrival[node_start.get_id_for_pulp(), vehicule.id] - demand
+                    loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id] #load_arrival-next 
+                    >= load_at_departure_previous
                     - M_cap * (1 - edge)
                 )
                 pulp_problem += (
                     loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
-                    <= loads_at_arrival[node_start.get_id_for_pulp(), vehicule.id] - demand
+                    <= load_at_departure_previous
                     + M_cap * (1 - edge)
+                )
+
+                # Ensure in delivery, loads is sufficient to deliver
+                pulp_problem += (
+                    loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id]
+                    >= demand_next * edge
+                )
+                # Ensure in recovery, loads don't exceed capacity
+                pulp_problem += (
+                    loads_at_arrival[node_end.get_id_for_pulp(), vehicule.id] - demand_next * edge # load at departure of end node.
+                    <= vehicule.max_volume
                 )
 
     # 4. Propagation nœud → dépôt (retour)
@@ -430,6 +442,14 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
         cat="Continuous",
     )
 
+
+    # ===   ===     ===     ===     LOADS 
+    loads_departure_deposit = pulp.LpVariable.dicts(
+        "load_departure_depot",
+        [vehicule.id for vehicule in problem.vehicles_dict.values()],
+        lowBound=0,
+        cat="Continuous",
+    )
     # TODO: wire into capacity constraints
     loads_at_arrival = pulp.LpVariable.dicts(
         "load_at_arrival",
@@ -443,11 +463,15 @@ def build_pulp_problem(problem: Problem) -> pulp.LpProblem:
     pulp_problem = _add_constraints(
         pulp_problem=pulp_problem,
         problem=problem,
+        #   SELECTION
         choose_edges=choose_edges,
+        #   TIMES
         times_arrival=times_arrival,
-        loads_at_arrival=loads_at_arrival,
         time_arrival_deposit=time_arrival_deposit,
-        time_departure_deposit=time_departure_deposit
+        time_departure_deposit=time_departure_deposit,
+        #   LOADS
+        loads_at_arrival=loads_at_arrival,
+        loads_departure_deposit=loads_departure_deposit,
     )
 
     return pulp_problem, choose_edges

@@ -39,7 +39,7 @@ class TimeWindow:
 @dataclass
 class Node:
     id:               int
-    required_volume:  float       | None = None
+    required_volume:  float       | None = None # volume flux ENTERING the node (positive for deliveries, negative for recoveries)
     time_window:      TimeWindow  | None = None
     gps_coordinates:  tuple       | None = None  # (lat, lon)
     required_time  :  int         | None = None # min
