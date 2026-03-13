@@ -87,10 +87,12 @@ class MixedUsedTimeAndTotalDist(LossFunction):
             self,
             alpha_time      :float,
             alpha_distance  :float,
+            alpha_load      :float,
             ):
         super().__init__("loss_minimise_the_max_usetime")
         self.alpha_time = alpha_time
         self.alpha_distance = alpha_distance
+        self.alpha_load = alpha_load
     def set_up_loss(self,
             pulp_problem: pulp.LpProblem,
             problem:      Problem,
@@ -119,6 +121,15 @@ class MixedUsedTimeAndTotalDist(LossFunction):
                 for vehicule in problem.vehicles_dict.values()
                 if node_start != node_end
             ) / typical_distance * self.alpha_distance
+            + pulp.lpSum(# if edge is active : multiply the distance by the maximum load (to encourage filling the vehicles, that is using lightest vehicules)
+                problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
+                * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
+                * vehicule.max_volume**(2/3) # mimic the conso is sunlinear
+                for node_start in problem.all_nodes
+                for node_end in problem.all_nodes
+                for vehicule in problem.vehicles_dict.values()
+                if node_start != node_end
+            ) / (typical_distance * problem.get_mean_load_per_vehicle()) * self.alpha_load
         )
 
         return pulp_problem

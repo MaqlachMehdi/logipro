@@ -50,6 +50,15 @@ class Problem:
 
         self.health_check()
 
+    def get_mean_load_per_vehicle(self) -> float:
+        total_volume = sum(
+            abs(node.required_volume)
+            for node in self.delivery_nodes
+            if node.required_volume is not None
+        )
+        num_vehicles = len(self.vehicles_dict)
+        return total_volume / num_vehicles if num_vehicles > 0 else 0.0
+
     def access_node_by_pulp_id(self, pulp_id: str) -> Node:
         if pulp_id not in self._pulp_id_to_node:
             raise KeyError(f"No node found for pulp_id: {pulp_id}")
