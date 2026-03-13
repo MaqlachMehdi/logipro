@@ -2,3 +2,5 @@
 *.pyo
 *.pyd
 *.bin
+**/solver/**/*.html
+*.lp
