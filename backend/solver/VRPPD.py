@@ -7,7 +7,7 @@ import pulp
 # import solver
 from solver.solver.problem import Problem,TimeMargin,build_problem
 
-from solver.solver.lip_solver import build_pulp_problem
+from solver.solver.lip_solver import build_pulp_problem, solve_with_progress
 
 DEBUG          = 0
 RECALL_MAP_API = 0   # set to 1 to force fresh API calls and overwrite the cache
@@ -237,7 +237,7 @@ def print_verbose_results(result, problem):
 
 if __name__ == "__main__":
     import os as _os
-    from solver.visualize import render_html, render_html_terminal
+    from solver.visualize import render_html, render_html_terminal, render_html_multi
 
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="VRPPD Solver - Vehicle Routing Problem with Pickup and Delivery")
@@ -256,19 +256,30 @@ if __name__ == "__main__":
     # loss_function = BaselineLoss(alpha_time=1.0, alpha_distance=1.0, alpha_load=1.0)
     # loss_function = MinTheMaxUseTime()
 
-    alpha_time          = .5
-    loss_function       = MixedUsedTimeAndTotalDist(alpha_time=alpha_time, alpha_distance=1-alpha_time)
+    alpha_time          = 0.0
+    loss_function       = MixedUsedTimeAndTotalDist(
+        alpha_time=alpha_time,
+        alpha_distance=0,
+        alpha_load=1-alpha_time,
+        )
+
     time_margin         = TimeMargin(before_concert=MARGIN_BEFORE_CONCERT, after_concert=MARGIN_AFTER_CONCERT, before_closing=MARGIN_BEFORE_CLOSING)
     problem             = build_problem(data, loss_function, time_margin, recall_api=RECALL_MAP_API)
 
     if not args.verbose:
         print(problem)
 
-    # 3. Build the PuLP MILP model
-    pulp_problem, choose_edges = build_pulp_problem(problem)
+    # 3. Build the PuLP MILP model (with progress logging)
+    pulp_problem, choose_edges = build_pulp_problem(problem, verbose=True)
 
-    # 4. Solve
-    pulp_problem.solve(pulp.PULP_CBC_CMD(msg=not args.verbose))
+    # 4. Solve with greedy warm start
+    solve_with_progress(
+        pulp_problem,
+        problem=problem,
+        choose_edges=choose_edges,
+        verbose=True,
+        warm_start=True,  # Use greedy heuristic for initial solution
+    )
 
     from solver.solver.lip_solver import make_result_from_pulp_result
     result = make_result_from_pulp_result(pulp_problem, problem)
@@ -284,8 +295,10 @@ if __name__ == "__main__":
         print(result)
 
     # 5. Visualize
-    output_path = _os.path.join(_os.path.dirname(__file__), "solution.html")
-    render_html(result, data, output_path)
+    # Multi-file dark mode (grey/orange/purple)
+    output_dir = _os.path.join(_os.path.dirname(__file__), "solution")
+    render_html_multi(result, data, output_dir)
 
+    # Terminal style (single file)
     output_path_terminal = _os.path.join(_os.path.dirname(__file__), "solution_terminal.html")
     render_html_terminal(result, data, output_path_terminal)
