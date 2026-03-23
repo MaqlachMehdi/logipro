@@ -34,6 +34,7 @@ class BaselineLoss(LossFunction):
         # Normalize components so their magnitudes are comparable:
         typical_distance = problem.oriented_edges.get_distance_frobenius_norm()
         better_min_max_time = problem.oriented_edges.ideal_min_max_time()
+        mean_load = max(1.0, problem.get_mean_load_per_vehicle())
 
         # time term (sum of vehicle active times)
         time_term = pulp.lpSum(
@@ -52,10 +53,21 @@ class BaselineLoss(LossFunction):
             if node_start != node_end
         )
 
+        # load-weighted distance term (encourage filling vehicles)
+        load_dist_term = pulp.lpSum(
+            problem.oriented_edges.distances_km[(node_start.id, node_end.id)]
+            * choose_edges[node_start.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]
+            * (vehicule.max_volume ** (2/3))
+            for node_start in problem.all_nodes
+            for node_end in problem.all_nodes
+            for vehicule in problem.vehicles_dict.values()
+            if node_start != node_end
+        )
 
         pulp_problem += (
             (self.alpha_time * (time_term / (better_min_max_time or 1.0)))
             + (self.alpha_distance * (distance_term / (typical_distance or 1.0)))
+            + (self.alpha_load * (load_dist_term / ((typical_distance or 1.0) * mean_load)))
         )
         return pulp_problem
 

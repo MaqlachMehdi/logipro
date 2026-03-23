@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "exceljs": "^4.4.0",
     "leaflet": "^1.9.4",
     "leaflet-polylinedecorator": "^1.6.0",
+    "exceljs": "^4.4.0",
     "lucide-react": "^0.563.0",
     "mapbox-gl": "^3.19.0",
     "react": "^19.2.0",

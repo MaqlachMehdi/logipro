@@ -791,7 +791,7 @@ app.get('/api/export/all', (req, res) => {
 
     // Section SPOTS
     lines.push('=== LIEUX ===');
-    lines.push('id,nom,adresse,lat,lon,ouverture,fermeture,concert,duree_concert_min,instruments,volume_total');
+    lines.push('id,nom,adresse,lat,lon,ouverture,fermeture,concert,instruments,volume_total');
 
     for (const s of spots) {
       // Dictionnaire [{ gearId, quantity }] directement depuis gearSelections
@@ -812,7 +812,7 @@ app.get('/api/export/all', (req, res) => {
       const instrumentsStr = JSON.stringify(instrumentsDict);
 
       lines.push(
-        `"${s.id}","${s.name}","${s.address}",${s.lat},${s.lon},"${s.openingTime || ''}","${s.closingTime || ''}","${s.concertTime || ''}",${s.concertDuration != null ? s.concertDuration : ''},"${instrumentsStr.replace(/"/g, '""')}",${volumeTotal.toFixed(2)}`
+        `"${s.id}","${s.name}","${s.address}",${s.lat},${s.lon},"${s.openingTime || ''}","${s.closingTime || ''}","${s.concertTime || ''}","${instrumentsStr.replace(/"/g, '""')}",${volumeTotal.toFixed(2)}`
       );
     }
 

@@ -8,8 +8,6 @@ interface MapPlannerProps {
 	zoom?: number;
 	spots?: Spot[];
 	routes?: Route[];
-	accessToken?: string;
-	styleUrl?: string;
 	onMapLoaded?: (map: any) => void;
 }
 

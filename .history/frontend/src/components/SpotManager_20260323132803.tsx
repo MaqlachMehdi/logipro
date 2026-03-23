@@ -65,7 +65,7 @@ export function SpotManager({
     if (!newSpot.name || !newSpot.address) return;
     const coords = await geocodeAddress(newSpot.address);
     onAddSpot({ ...newSpot, ...coords });
-    setNewSpot({ name: '', address: '', openingTime: '08:00', closingTime: '23:00', concertTime: '20:00' , concertDuration: 120});
+    setNewSpot({ name: '', address: '', openingTime: '08:00', closingTime: '23:00', concertTime: '20:00' });
     setIsAdding(false);
   };
 

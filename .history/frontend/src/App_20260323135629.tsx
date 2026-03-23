@@ -51,56 +51,44 @@ const createInitialState = (): AppState => {
 };
 
 /* --------------------- REDUCER --------------------- */
-function appReducer(state: AppState, action: any): AppState {
-  switch (action.type) {
-    case 'SET_SPOTS':
-      localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(action.payload)));
-      return { ...state, spots: action.payload };
-
-    case 'SELECT_SPOT':
-      return { ...state, selectedSpotId: action.payload };
-
-    case 'UPDATE_SPOT_GEAR':
-      {
-        const updatedSpots = state.spots.map((spot) =>
-          spot.id === action.payload.spotId ? { ...spot, gearSelections: action.payload.gear } : spot,
-        );
-        localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(updatedSpots)));
-        return { ...state, spots: updatedSpots };
-      }
-
-    case 'UPDATE_SPOT':
-      {
-        const updatedSpotsForUpdate = state.spots.map((spot) =>
-          spot.id === action.payload.id ? action.payload : spot,
-        );
-        localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(updatedSpotsForUpdate)));
-        return { ...state, spots: updatedSpotsForUpdate };
-      }
+              <MapPlanner
+                accessToken={'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2x4b2Z6b2MwMDFwMnBvN2J6b2Z6b2MwIn0.1234567890abcdef'}
+                styleUrl={undefined}
+                center={[DEPOT_SPOT.lat, DEPOT_SPOT.lon]}
+                zoom={13}
+                spots={state.spots}
+                routes={state.routes}
+                onMapLoaded={(map) => {
+                  try {
+                    // nothing to do; LeafletMap handles markers
+                    console.log('Leaflet map loaded');
+                  } catch (e) {
+                    console.error('Map onLoad error', e);
+                  }
+                }}
+              />
+      localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(updatedSpotsForUpdate)));
+      return { ...state, spots: updatedSpotsForUpdate };
 
     case 'ADD_SPOT':
-      {
-        const newSpot: Spot = {
-          id: `spot-${Date.now()}`,
-          ...action.payload,
-          gearSelections: [],
-        };
-        const newSpots = [...state.spots, newSpot];
-        localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(newSpots)));
-        return { ...state, spots: newSpots, selectedSpotId: newSpot.id };
-      }
+      const newSpot: Spot = {
+        id: `spot-${Date.now()}`,
+        ...action.payload,
+        gearSelections: [],
+      };
+      const newSpots = [...state.spots, newSpot];
+      localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(newSpots)));
+      return { ...state, spots: newSpots, selectedSpotId: newSpot.id };
 
     case 'DELETE_SPOT':
       if (action.payload === 'depot-permanent') return state;
-      {
-        const filteredSpots = state.spots.filter((s) => s.id !== action.payload);
-        localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(filteredSpots)));
-        return {
-          ...state,
-          spots: filteredSpots,
-          selectedSpotId: state.selectedSpotId === action.payload ? null : state.selectedSpotId,
-        };
-      }
+      const filteredSpots = state.spots.filter((s) => s.id !== action.payload);
+      localStorage.setItem(USER_SPOTS_KEY, JSON.stringify(removeDepot(filteredSpots)));
+      return {
+        ...state,
+        spots: filteredSpots,
+        selectedSpotId: state.selectedSpotId === action.payload ? null : state.selectedSpotId,
+      };
 
     case 'SET_VEHICLES':
       return { ...state, vehicles: action.payload };
