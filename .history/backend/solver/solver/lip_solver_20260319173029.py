@@ -860,8 +860,6 @@ def _add_constraints(
         pulp_problem += time_arrival_deposit[vehicule.id] <= problem.deposit_node.time_window.end_minutes
         # Vehicle cannot depart before depot opens
         pulp_problem += time_departure_deposit[vehicule.id] >= problem.deposit_node.time_window.start_minutes
-        # Also prevent departures after depot closing
-        pulp_problem += time_departure_deposit[vehicule.id] <= problem.deposit_node.time_window.end_minutes
 
     _progress.phase_done()
 
@@ -905,13 +903,6 @@ def _add_constraints(
                     - M * (1 - choose_edges[problem.deposit_node.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
                 )
             )
-            
-            # Upper bound counterpart to enforce equality when edge active
-            pulp_problem += (
-                times_arrival[node_end.get_id_for_pulp(), vehicule.id] <= (time_departure + travel_time
-                    + M * (1 - choose_edges[problem.deposit_node.get_id_for_pulp(), node_end.get_id_for_pulp(), vehicule.id])
-                )
-            )
 
     # CASES ENDING AT DEPOSIT
     for node_start in all_nodes_except_deposit:
@@ -922,13 +913,6 @@ def _add_constraints(
                  # arrival time at deposit must be >= departure time from node_start + travel_time, if edge is chosen
                 time_arrival_deposit[vehicule.id] >= (time_departure + travel_time
                     - M * (1 - choose_edges[node_start.get_id_for_pulp(), problem.deposit_node.get_id_for_pulp(), vehicule.id]) # deactivate the constraint when edge's not active
-                )
-            )
-            
-            # Upper bound counterpart to enforce equality when edge active
-            pulp_problem += (
-                time_arrival_deposit[vehicule.id] <= (time_departure + travel_time
-                    + M * (1 - choose_edges[node_start.get_id_for_pulp(), problem.deposit_node.get_id_for_pulp(), vehicule.id])
                 )
             )
 

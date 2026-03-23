@@ -292,7 +292,6 @@ app.put('/api/spots/sync', (req, res) => {
       openingTime: spot.openingTime,
       closingTime: spot.closingTime,
       concertTime: spot.concertTime || null,
-      concertDuration: typeof spot.concertDuration === 'number' ? spot.concertDuration : null,
       gearSelectionsJson: JSON.stringify(spot.gearSelections || [])
     }));
 

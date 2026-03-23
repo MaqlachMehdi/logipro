@@ -257,15 +257,13 @@ if __name__ == "__main__":
     # loss_function = MinTheMaxUseTime()
 
     alpha_time          = 0.0
-    """loss_function       = MixedUsedTimeAndTotalDist(
+    loss_function       = MixedUsedTimeAndTotalDist(
         alpha_time=alpha_time,
         alpha_distance=0,
         alpha_load=1-alpha_time,
         )
     
-    loss_function = MinTheMaxUseTime()"""
-
-    loss_function = MixedUsedTotalDistAndTime(alpha_time=0.5, alpha_distance=0.3, alpha_load=0.2)
+    loss_function = MinTheMaxUseTime()
 
     time_margin         = TimeMargin(before_concert=MARGIN_BEFORE_CONCERT, after_concert=MARGIN_AFTER_CONCERT, before_closing=MARGIN_BEFORE_CLOSING)
     problem             = build_problem(data, loss_function, time_margin, recall_api=RECALL_MAP_API)
