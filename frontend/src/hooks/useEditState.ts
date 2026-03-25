@@ -21,9 +21,7 @@ export function useEditState<T extends { id?: string }>(
   };
 
   const updateEdit = (key: string, value: any) => {
-    if (editData) {
-      setEditData({ ...editData, [key]: value });
-    }
+    setEditData(prev => prev ? { ...prev, [key]: value } : null);
   };
 
   const saveEdit = (onSave: (item: T) => void) => {

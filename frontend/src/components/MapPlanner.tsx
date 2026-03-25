@@ -1,7 +1,10 @@
 /* src/components/MapPlanner.tsx */
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { LeafletMap } from './LeafletMap';
+import type { VehicleRoute, ConcertData } from './LeafletMap';
 import type { Spot, Route } from '../types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 interface MapPlannerProps {
 	center?: [number, number];
@@ -20,9 +23,34 @@ export function MapPlanner({
 	routes = [],
 	onMapLoaded,
 }: MapPlannerProps) {
+	const [vehicleRoutes, setVehicleRoutes] = useState<VehicleRoute[] | undefined>(undefined);
+	const [concertsData, setConcertsData] = useState<ConcertData[] | undefined>(undefined);
+
+	useEffect(() => {
+		fetch(`${API_URL}/api/solution/map-data`)
+			.then((r) => r.json())
+			.then((data) => {
+				if (data.success) {
+					setVehicleRoutes(data.vehicleRoutes);
+					setConcertsData(data.concertsData);
+				}
+			})
+			.catch(() => {
+				// No solution yet — map still works without it
+			});
+	}, []);
+
 	return (
 		<div style={{ width: '100%', height: 500, borderRadius: 8, overflow: 'hidden' }}>
-			<LeafletMap center={center} zoom={zoom} spots={spots} routes={routes} onMapLoaded={onMapLoaded} />
+			<LeafletMap
+				center={center}
+				zoom={zoom}
+				spots={spots}
+				routes={routes}
+				vehicleRoutes={vehicleRoutes}
+				concertsData={concertsData}
+				onMapLoaded={onMapLoaded}
+			/>
 		</div>
 	);
 }

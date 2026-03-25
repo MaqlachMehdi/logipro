@@ -19,8 +19,8 @@ interface SpotManagerProps {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// Retourne { lat, lon } si trouvé, ou { error: string } si introuvable
-const geocodeAddress = async (address: string): Promise<{ lat: number; lon: number } | { error: string }> => {
+// ✅ Remplace mockGeocode — utilise Nominatim via le backend
+const geocodeAddress = async (address: string): Promise<{ lat: number; lon: number }> => {
   try {
     const response = await fetch(`${API_URL}/api/geocode`, {
       method: 'POST',
@@ -28,11 +28,11 @@ const geocodeAddress = async (address: string): Promise<{ lat: number; lon: numb
       body: JSON.stringify({ address }),
     });
     const data = await response.json();
-    if (typeof data.lat === 'number' && typeof data.lon === 'number') return { lat: data.lat, lon: data.lon };
-    return { error: data.error || 'Adresse introuvable' };
-  } catch {
-    return { error: 'Impossible de joindre le serveur de géocodage' };
+    if (data.lat && data.lon) return { lat: data.lat, lon: data.lon };
+  } catch (error) {
+    console.error('❌ Géocodage échoué:', error);
   }
+  return { lat: 0, lon: 0 }; // fallback
 };
 
 export function SpotManager({ 
@@ -44,7 +44,6 @@ export function SpotManager({
   onDeleteSpot 
 }: SpotManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
-  const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const editState = useEditState<Spot>();
   const [newSpot, setNewSpot] = useState({
     name: '',
@@ -63,15 +62,11 @@ export function SpotManager({
     });
   };
 
+  // ✅ handleAdd utilise geocodeAddress
   const handleAdd = async () => {
     if (!newSpot.name || !newSpot.address) return;
-    setGeocodeError(null);
-    const result = await geocodeAddress(newSpot.address);
-    if ('error' in result) {
-      setGeocodeError(result.error);
-      return;
-    }
-    onAddSpot({ ...newSpot, ...result });
+    const coords = await geocodeAddress(newSpot.address);
+    onAddSpot({ ...newSpot, ...coords });
     setNewSpot({ name: '', address: '', openingTime: '08:00', closingTime: '23:00', concertTime: '20:00', concertDuration: 120, setupDuration: 30, teardownDuration: 30 });
     setIsAdding(false);
   };
@@ -342,30 +337,7 @@ export function SpotManager({
                   className="bg-white border-gray-300 text-gray-900"
                 />
               </div>
-              <div>
-                <Label className="text-gray-600 text-xs">Installation (min)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={String(newSpot.setupDuration)}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSpot({ ...newSpot, setupDuration: Number(e.target.value) })}
-                  className="bg-white border-gray-300 text-gray-900"
-                />
-              </div>
-              <div>
-                <Label className="text-gray-600 text-xs">Désinstallation (min)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={String(newSpot.teardownDuration)}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSpot({ ...newSpot, teardownDuration: Number(e.target.value) })}
-                  className="bg-white border-gray-300 text-gray-900"
-                />
-              </div>
             </div>
-            {geocodeError && (
-              <p className="text-red-500 text-xs px-1">{geocodeError}</p>
-            )}
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
@@ -389,7 +361,7 @@ export function SpotManager({
             variant="outline"
             size="sm"
             className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-blue-400 hover:bg-blue-50"
-            onClick={() => { setIsAdding(true); setGeocodeError(null); }}
+            onClick={() => setIsAdding(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
             Ajouter un lieu

@@ -32,7 +32,6 @@ db.exec(`
     type TEXT NOT NULL,
     capacity REAL NOT NULL,
     color TEXT NOT NULL,
-    is_available INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
@@ -79,18 +78,6 @@ try {
   console.warn('⚠️ Migration check failed:', err.message);
 }
 
-// Migration: add is_available to vehicles if missing
-try {
-  const vinfo = db.prepare("PRAGMA table_info('vehicles')").all();
-  const hasAvailable = vinfo.some((c) => c.name === 'is_available');
-  if (!hasAvailable) {
-    db.exec(`ALTER TABLE vehicles ADD COLUMN is_available INTEGER NOT NULL DEFAULT 1`);
-    console.log('✓ Migration: added is_available to vehicles');
-  }
-} catch (err) {
-  console.warn('⚠️ Migration is_available check failed:', err.message);
-}
-
 db.exec(`
   CREATE TABLE IF NOT EXISTS gears (
     id TEXT PRIMARY KEY,
@@ -103,14 +90,14 @@ db.exec(`
 `);
 
 const selectVehiclesStmt = db.prepare(`
-  SELECT id, name, type, capacity, color, is_available AS isAvailable
+  SELECT id, name, type, capacity, color
   FROM vehicles
   ORDER BY created_at ASC
 `);
 
 const insertVehicleStmt = db.prepare(`
-  INSERT INTO vehicles (id, name, type, capacity, color, is_available, created_at, updated_at)
-  VALUES (@id, @name, @type, @capacity, @color, @isAvailable, datetime('now'), datetime('now'))
+  INSERT INTO vehicles (id, name, type, capacity, color, created_at, updated_at)
+  VALUES (@id, @name, @type, @capacity, @color, datetime('now'), datetime('now'))
 `);
 
 const selectSpotsStmt = db.prepare(`
@@ -208,8 +195,7 @@ const replaceGearsTx = (gears) => {
  */
 app.get('/api/vehicles', (req, res) => {
   try {
-    const rows = selectVehiclesStmt.all();
-    const vehicles = rows.map((r) => ({ ...r, isAvailable: r.isAvailable === 1 }));
+    const vehicles = selectVehiclesStmt.all();
     return res.json({ success: true, vehicles });
   } catch (error) {
     console.error('❌ Erreur lecture véhicules:', error);
@@ -251,17 +237,8 @@ app.put('/api/vehicles/sync', (req, res) => {
   }
 
   try {
-    const dbRows = vehicles.map((v) => ({
-      id: v.id,
-      name: v.name,
-      type: v.type,
-      capacity: v.capacity,
-      color: v.color,
-      isAvailable: v.isAvailable === false || v.isAvailable === 0 ? 0 : 1,
-    }));
-    replaceVehiclesTx(dbRows);
-    const rows = selectVehiclesStmt.all();
-    const persisted = rows.map((r) => ({ ...r, isAvailable: r.isAvailable === 1 }));
+    replaceVehiclesTx(vehicles);
+    const persisted = selectVehiclesStmt.all();
     return res.json({ success: true, vehicles: persisted });
   } catch (error) {
     console.error('❌ Erreur sync véhicules:', error);
@@ -311,20 +288,15 @@ app.put('/api/spots/sync', (req, res) => {
     typeof spot.address === 'string' &&
     typeof spot.lat === 'number' &&
     typeof spot.lon === 'number' &&
-    !(spot.lat === 0 && spot.lon === 0) &&
     typeof spot.openingTime === 'string' &&
     typeof spot.closingTime === 'string' &&
     Array.isArray(spot.gearSelections)
   ));
 
   if (!isValid) {
-    const badSpot = spots.find((s) => s && s.lat === 0 && s.lon === 0);
-    const errorMsg = badSpot
-      ? `Lieu "${badSpot.name}" non géocodé (lat=0, lon=0). Vérifiez l'adresse.`
-      : 'Format lieu invalide';
     return res.status(400).json({
       success: false,
-      error: errorMsg,
+      error: 'Format lieu invalide'
     });
   }
 
@@ -605,22 +577,17 @@ app.post('/api/optimize/run', (req, res) => {
     gearMap[g.id] = { name: g.name, volume: g.volume };
   }
 
-  // 5. Construire le catalogue d'instruments (nouveau schéma VRPPD)
-  const instrument_catalog = gears.map((g) => ({
-    name: g.name,
-    volume_m3: g.volume,
+  // 5. Construire la liste "instruments" (catalogue plat pour le solveur)
+  const instruments = gears.map((g) => ({
+    Nom: g.name,
+    Volume: g.volume,
   }));
 
-  // 6. Construire la liste "locations" — dépôt en index 0, puis les concerts
+  // 6. Construire la liste "lieux" — dépôt en index 0, puis les concerts
   const allSpots = [depot, ...concertSpots];
 
-  const toMinutes = (hhmm) => {
-    if (!hhmm) return null;
-    const [h, m] = hhmm.split(':').map(Number);
-    return h * 60 + (m || 0);
-  };
-
-  const locations = allSpots.map((spot, index) => {
+  const lieux = allSpots.map((spot, index) => {
+    // Résoudre les instruments du spot depuis les gearSelections
     const instrumentsList = [];
     for (const sel of spot.gearSelections || []) {
       const gear = gearMap[sel.gearId];
@@ -631,61 +598,71 @@ app.post('/api/optimize/run', (req, res) => {
       }
     }
 
+    // Convertir openingTime "HH:MM" → minutes
+    const toMinutes = (hhmm) => {
+      if (!hhmm) return null;
+      const [h, m] = hhmm.split(':').map(Number);
+      return h * 60 + (m || 0);
+    };
+
     return {
-      id: index,
-      name: spot.name,
-      address: spot.address,
+      Id_Lieux: index,
+      Nom: spot.name,
+      Adresse: spot.address,
       lat: spot.lat,
       lon: spot.lon,
-      open_time_min: toMinutes(spot.openingTime),
-      close_time_min: toMinutes(spot.closingTime),
-      concert_start_min: spot.concertTime ? toMinutes(spot.concertTime) : null,
-      concert_duration_min: spot.concertDuration != null ? spot.concertDuration : 0,
+      HeureTot: toMinutes(spot.openingTime),
+      HeureTard: toMinutes(spot.closingTime),
+      HeureConcert: spot.concertTime ? toMinutes(spot.concertTime) : null,
+      DureeConcert: spot.concertDuration != null ? spot.concertDuration : null,
       setup_duration_min: spot.setupDuration != null ? spot.setupDuration : 0,
       teardown_duration_min: spot.teardownDuration != null ? spot.teardownDuration : 0,
-      instruments: instrumentsList.join(', '),
+      Instruments: instrumentsList.join(', '),
     };
   });
 
-  // 7. Construire la liste "vehicles"
-  const vehicles_json = vehicles.map((v, index) => ({
-    id: index + 1,
-    plate: v.name,
-    capacity_m3: v.capacity,
-    is_available: v.isAvailable ?? 1,
+  // 7. Construire la liste "vehicules"
+  const vehicules = vehicles.map((v, index) => ({
+    Id_vehicules: index + 1,
+    Nom: v.name,
+    Volume_dispo: v.capacity,
   }));
 
   // 8. Log de contrôle
   console.log('📦 JSON construit depuis la DB:');
   console.log(`   - Dépôt: ${depot.name} | lat=${depot.lat} lon=${depot.lon} | adresse="${depot.address}"`);
-  console.log(`   - ${locations.length} lieux (dont dépôt)`);
-  console.log(`   - ${instrument_catalog.length} instruments dans le catalogue`);
-  console.log(`   - ${vehicles_json.length} véhicules`);
+  console.log(`   - ${lieux.length} lieux (dont dépôt)`);
+  console.log(`   - ${instruments.length} instruments dans le catalogue`);
+  console.log(`   - ${vehicules.length} véhicules`);
 
+  // ✅ inputData déclaré AVANT le console.log qui l'utilise
   const selectedConfig = config || 'equilibre';
-  const inputData = { locations, instrument_catalog, vehicles: vehicles_json, config: selectedConfig };
+  const inputData = { lieux, instruments, vehicules, config: selectedConfig };
 
   console.log('📋 JSON COMPLET ENVOYÉ AU SOLVEUR:');
   console.log(JSON.stringify(inputData, null, 2));
 
-  // 9. Lancer VRPPD.py en mode API (lit stdin, renvoie JSON sur stdout)
-  const pythonScriptPath = path.join(__dirname, 'solver', 'VRPPD.py');
+  // 9. Lancer le solveur Python (même logique qu'avant)
+  const pythonScriptPath = path.join(__dirname, 'solver', 'tot.py');
   if (!fs.existsSync(pythonScriptPath)) {
     return res.status(500).json({ success: false, error: `Solveur Python introuvable: ${pythonScriptPath}` });
   }
 
-  // Utiliser le Python du venv (qui a tqdm, pulp, etc.) en priorité
-  const venvPython = path.join(__dirname, 'solver', '.venv', 'Scripts', 'python.exe');
-  const pythonExe = fs.existsSync(venvPython) ? venvPython : 'python';
-
   let pythonProcess;
   try {
-    pythonProcess = spawn(pythonExe, [pythonScriptPath, '--api'], {
+    pythonProcess = spawn('python', [pythonScriptPath], {
       cwd: path.join(__dirname),
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-  } catch (err2) {
-    return res.status(500).json({ success: false, error: `Erreur lancement solveur: ${err2.message}` });
+  } catch {
+    try {
+      pythonProcess = spawn('python3', [pythonScriptPath], {
+        cwd: path.join(__dirname),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } catch (err2) {
+      return res.status(500).json({ success: false, error: `Erreur lancement solveur: ${err2.message}` });
+    }
   }
 
   let stdout = '';
@@ -705,8 +682,6 @@ app.post('/api/optimize/run', (req, res) => {
 
   pythonProcess.on('close', (code) => {
     clearTimeout(timeout);
-    // Always print solver stderr (progress + debug summary) to Node console
-    if (stderr) console.log('[solver stderr]\n' + stderr);
     if (isTimeout) {
       return res.status(504).json({ success: false, error: 'Timeout: le solveur a pris trop de temps' });
     }
@@ -714,15 +689,9 @@ app.post('/api/optimize/run', (req, res) => {
       return res.status(500).json({ success: false, error: `Erreur du solveur: ${stderr || 'Erreur inconnue'}` });
     }
     try {
-      // Find the last non-empty line — PuLP/CBC may print junk before our JSON
-      const jsonLine = stdout.trim().split('\n').filter(l => l.trim().startsWith('{')).pop();
-      if (!jsonLine) throw new Error('no JSON line found in stdout');
-      const result = JSON.parse(jsonLine);
+      const result = JSON.parse(stdout);
       return res.json(result);
-    } catch (parseErr) {
-      console.error('❌ Erreur parsing JSON:', parseErr.message);
-      console.error('stdout brut:', JSON.stringify(stdout.substring(0, 500)));
-      console.error('stderr brut:', stderr.substring(0, 500));
+    } catch {
       return res.status(500).json({ success: false, error: 'Erreur parsing résultats du solveur' });
     }
   });
@@ -756,15 +725,14 @@ app.get('/api/optimize/preview', (req, res) => {
       gearMap[g.id] = { name: g.name, volume: g.volume };
     }
 
-    const allSpots = [depot, ...concertSpots];
-
-    const toMinutesPreview = (hhmm) => {
+    const toMinutes = (hhmm) => {
       if (!hhmm) return null;
       const [h, m] = hhmm.split(':').map(Number);
       return h * 60 + (m || 0);
     };
 
-    const locations = allSpots.map((spot, index) => {
+    const allSpots = [depot, ...concertSpots];
+    const lieux = allSpots.map((spot, index) => {
       const instrumentsList = [];
       for (const sel of spot.gearSelections || []) {
         const gear = gearMap[sel.gearId];
@@ -775,57 +743,32 @@ app.get('/api/optimize/preview', (req, res) => {
         }
       }
       return {
-        id: index,
-        name: spot.name,
-        address: spot.address,
+        Id_Lieux: index,
+        Nom: spot.name,
+        Adresse: spot.address,
         lat: spot.lat,
         lon: spot.lon,
-        open_time_min: toMinutesPreview(spot.openingTime),
-        close_time_min: toMinutesPreview(spot.closingTime),
-        concert_start_min: spot.concertTime ? toMinutesPreview(spot.concertTime) : null,
-        concert_duration_min: spot.concertDuration != null ? spot.concertDuration : 0,
+        HeureTot: toMinutes(spot.openingTime),
+        HeureTard: toMinutes(spot.closingTime),
+        HeureConcert: spot.concertTime ? toMinutes(spot.concertTime) : null,
+        DureeConcert: spot.concertDuration != null ? spot.concertDuration : null,
         setup_duration_min: spot.setupDuration != null ? spot.setupDuration : 0,
         teardown_duration_min: spot.teardownDuration != null ? spot.teardownDuration : 0,
-        instruments: instrumentsList.join(', '),
+        Instruments: instrumentsList.join(', '),
       };
     });
 
-    const instrument_catalog = gears.map((g) => ({ name: g.name, volume_m3: g.volume }));
-    const vehicles_json = vehicleRows.map((v, index) => ({
-      id: index + 1,
-      plate: v.name,
-      capacity_m3: v.capacity,
-      is_available: v.isAvailable ?? 1,
+    const instruments = gears.map((g) => ({ Nom: g.name, Volume: g.volume }));
+    const vehicules = vehicleRows.map((v, index) => ({
+      Id_vehicules: index + 1,
+      Nom: v.name,
+      Volume_dispo: v.capacity,
     }));
 
-    return res.json({ success: true, json: { locations, instrument_catalog, vehicles: vehicles_json } });
+    return res.json({ success: true, json: { lieux, instruments, vehicules } });
 
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-/**
- * POST /api/geocode
- * Convertit une adresse en coordonnées GPS via Nominatim (OpenStreetMap)
- */
-app.post('/api/geocode', async (req, res) => {
-  const { address } = req.body;
-  if (!address?.trim()) {
-    return res.status(400).json({ error: 'Adresse manquante' });
-  }
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.trim())}&limit=1`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'RegietourApp/1.0' },
-    });
-    const data = await response.json();
-    if (!data.length) {
-      return res.status(404).json({ error: `Adresse introuvable : "${address.trim()}"` });
-    }
-    return res.json({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
-  } catch (err) {
-    return res.status(500).json({ error: `Erreur géocodage : ${err.message}` });
   }
 });
 

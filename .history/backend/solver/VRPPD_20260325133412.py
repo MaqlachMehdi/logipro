@@ -1,14 +1,5 @@
 import json
 import argparse
-import os as _os
-import sys as _sys
-
-# Ensure backend/ (parent of this file's directory) is in sys.path
-# so that "solver.solver.*" imports resolve correctly regardless of how the script is invoked
-_project_root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-if _project_root not in _sys.path:
-    _sys.path.insert(0, _project_root)
-
 from time import time_ns
 import pulp
 
@@ -245,6 +236,9 @@ def print_verbose_results(result, problem):
 
 
 if __name__ == "__main__":
+    import os as _os
+    import sys as _sys
+
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="VRPPD Solver - Vehicle Routing Problem with Pickup and Delivery")
     parser.add_argument("-v", "--verbose", action="store_true",
@@ -264,22 +258,7 @@ if __name__ == "__main__":
         data['vehicles'] = [v for v in data['vehicles'] if v.get('is_available', 1) != 0]
 
         if not data['vehicles']:
-            _sys.stdout.buffer.write((json.dumps({'success': False, 'error': 'Aucun véhicule disponible (is_available=0 pour tous)'}, ensure_ascii=False) + '\n').encode('utf-8'))
-            _sys.exit(0)
-
-        # Validate that every location has real GPS coordinates
-        bad_locs = [
-            loc['name'] for loc in data.get('locations', [])
-            if loc.get('lat', 0) == 0 and loc.get('lon', 0) == 0
-        ]
-        if bad_locs:
-            _sys.stdout.buffer.write((json.dumps({
-                'success': False,
-                'error': (
-                    f"Lieux sans coordonnées GPS : {', '.join(bad_locs)}. "
-                    "Supprimez-les et re-saisissez une adresse valide dans 'Gestion des lieux'."
-                )
-            }, ensure_ascii=False) + '\n').encode('utf-8'))
+            print(json.dumps({'success': False, 'error': 'Aucun véhicule disponible (is_available=0 pour tous)'}))
             _sys.exit(0)
 
         # Redirect stdout → stderr so solver progress output doesn't corrupt the JSON response
@@ -306,7 +285,7 @@ if __name__ == "__main__":
             status = pulp.LpStatus[pulp_problem.status]
             if pulp_problem.status != pulp.LpStatusOptimal:
                 _sys.stdout = _real_stdout
-                _sys.stdout.buffer.write((json.dumps({'success': False, 'error': f'Pas de solution optimale: {status}'}, ensure_ascii=False) + '\n').encode('utf-8'))
+                print(json.dumps({'success': False, 'error': f'Pas de solution optimale: {status}'}))
                 _sys.exit(0)
 
             result = make_result_from_pulp_result(pulp_problem, problem)
@@ -349,32 +328,6 @@ if __name__ == "__main__":
                     'distance_km': round(vehicle_dist, 2),
                 })
 
-            # ── DEBUG: print per-vehicle summary to stderr ───────────────────
-            sep = "-" * 60
-            print(f"\n{sep}", file=_sys.stderr)
-            print(f"  RESULTATS SOLVEUR -- {len(result.data)} vehicule(s)", file=_sys.stderr)
-            print(sep, file=_sys.stderr)
-            for v in details_vehicules:
-                dest_str = " -> ".join(v['destinations']) if v['destinations'] else "(aucune livraison)"
-                print(f"  {v['nom']:<20}  {v['temps_min']:>6.1f} min  {v['distance_km']:>6.2f} km", file=_sys.stderr)
-                print(f"    {dest_str}", file=_sys.stderr)
-            print(sep, file=_sys.stderr)
-            print(f"  TOTAL  {total_time:>6.1f} min  {total_distance:>6.2f} km  |  objectif={round(pulp.value(pulp_problem.objective), 4)}", file=_sys.stderr)
-            print(f"{sep}\n", file=_sys.stderr)
-            # ─────────────────────────────────────────────────────────────────
-
-            # ── Generate HTML files (same as CLI mode) ───────────────────────
-            from solver.visualize import render_html_terminal, render_html_multi
-            _solver_dir = _os.path.dirname(__file__)
-            _obj_val = pulp.value(pulp_problem.objective)
-            _status  = pulp.LpStatus[pulp_problem.status]
-            render_html_multi(result, data, _os.path.join(_solver_dir, "solution"),
-                              solve_status=_status, objective_value=_obj_val)
-            render_html_terminal(result, data, _os.path.join(_solver_dir, "solution_terminal.html"),
-                                 solve_status=_status, objective_value=_obj_val)
-            print("[api] HTML genere : solution_terminal.html + solution/", file=_sys.stderr)
-            # ─────────────────────────────────────────────────────────────────
-
             output = {
                 'success': True,
                 'solution': {
@@ -391,7 +344,7 @@ if __name__ == "__main__":
             output = {'success': False, 'error': str(_e)}
 
         _sys.stdout = _real_stdout
-        _sys.stdout.buffer.write((json.dumps(output, ensure_ascii=False) + '\n').encode('utf-8'))
+        print(json.dumps(output, ensure_ascii=False))
 
     else:
         # ── CLI MODE ────────────────────────────────────────────────────────────

@@ -18,7 +18,6 @@ export interface Vehicle {
   type: VehicleType;
   capacity: number;
   color: string;
-  isAvailable?: boolean;
 }
 
 export interface Stop {

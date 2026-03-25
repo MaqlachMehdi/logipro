@@ -176,7 +176,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
 
               <Button
                 size="sm"
-                className="h-6 w-6 p-0 !bg-white !hover:bg-gray-100 !text-black border border-gray-300"
+                className="h-6 w-6 p-0 !bg-white !hover:bg-gray-100 !text-gray-500 border border-gray-300"
                 onClick={() => {
                   setIsAddMenuOpen((prev) => !prev);
                   setAddError('');
@@ -184,7 +184,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                 aria-label="Ajouter un instrument"
           
               >
-                <span className="text-black font-bold text-lg leading-none">+</span>
+                <span className="text-gray-500 font-bold text-lg leading-none">+</span>
               </Button>
 
               {isAddMenuOpen && (
@@ -235,7 +235,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                   {addError && <p className="text-xs text-red-600">{addError}</p>}
 
                   <div className="flex items-center gap-2 pt-1">
-                    <Button size="sm" className="h-8 flex-1 !bg-white !hover:bg-gray-100 !text-black border border-gray-300" onClick={handleAddGear}>
+                    <Button size="sm" className="h-8 flex-1 !bg-white !hover:bg-gray-100 !text-gray-500 border border-gray-300" onClick={handleAddGear}>
                       Ajouter
                     </Button>
                     <Button

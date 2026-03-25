@@ -8,7 +8,7 @@ import {
 } from '../utils/vrp-solver';
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
 import { Button } from './ui/button';
-import { Truck, MapPin, Package, TrendingUp, Zap, AlertCircle, Loader, Clock } from 'lucide-react';
+import { Truck, MapPin, Package, TrendingUp, Zap, AlertCircle, Loader } from 'lucide-react';
 
 interface RouteSummaryProps {
   routes: Route[];
@@ -42,7 +42,6 @@ export function RouteSummary({
   const [error, setError] = useState<string | null>(null);
   const [serverHealth, setServerHealth] = useState<boolean | null>(null);
   const [barWidths, setBarWidths] = useState<Record<string, number>>({});
-  const [solutionBarWidths, setSolutionBarWidths] = useState<Record<number, number>>({});
 
   // Vérifier la santé du serveur au montage
   useEffect(() => {
@@ -60,21 +59,6 @@ export function RouteSummary({
     }, 120);
     return () => clearTimeout(timer);
   }, [routes]);
-
-  // Animer les barres de la solution optimisée
-  useEffect(() => {
-    if (!solution) { setSolutionBarWidths({}); return; }
-    setSolutionBarWidths({});
-    const maxTime = Math.max(...solution.details_vehicules.map(v => v.temps_min));
-    const timer = setTimeout(() => {
-      const widths: Record<number, number> = {};
-      solution.details_vehicules.forEach((v, idx) => {
-        widths[idx] = maxTime > 0 ? Math.round((v.temps_min / maxTime) * 100) : 0;
-      });
-      setSolutionBarWidths(widths);
-    }, 120);
-    return () => clearTimeout(timer);
-  }, [solution]);
 
   const handleOptimize = async () => {
     if (!spots.length || !vehicles.length) {
@@ -205,15 +189,12 @@ export function RouteSummary({
         {/* Résultat d'optimisation (intégré, sans remplacer le formulaire) */}
         {solution && (() => {
           const formatted = formatSolution(solution);
-          const maxTime = Math.max(...solution.details_vehicules.map(v => v.temps_min));
           return (
             <div className="space-y-3 pt-2 border-t border-gray-200">
               <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
                 Résultat d'optimisation
               </div>
-
-              {/* Stats globales */}
               <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg p-3 border border-emerald-200">
                 <h3 className="font-semibold text-sm text-gray-900 mb-2">{formatted.title}</h3>
                 <div className="grid grid-cols-4 gap-2">
@@ -225,56 +206,19 @@ export function RouteSummary({
                   ))}
                 </div>
               </div>
-
-              {/* Cartes véhicules solution — même style que les route cards */}
               <div className="space-y-2">
-                {solution.details_vehicules.map((sv, idx) => {
-                  const vehicle = vehicles.find(v => v.name === sv.nom);
-                  const color = vehicle ? getColorHex(vehicle.color) : '#60a5fa';
-                  const barPct = solutionBarWidths[idx] ?? 0;
-                  const targetPct = maxTime > 0 ? Math.round((sv.temps_min / maxTime) * 100) : 0;
-
-                  return (
-                    <div key={idx} className="rounded-xl border-2 border-gray-100 overflow-hidden">
-                      <div className="h-1" style={{ backgroundColor: color }} />
-                      <div className="p-3 bg-white">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                            <span className="font-bold text-gray-900 text-sm">{sv.nom}</span>
-                          </div>
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                            {sv.destinations.length} arrêts
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span className="font-semibold text-gray-800">{sv.temps_min.toFixed(1)} min</span>
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            {sv.distance_km.toFixed(1)} km
-                          </span>
-                        </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${barPct}%`,
-                              background: `linear-gradient(90deg, ${color}cc, ${color})`,
-                              transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1)',
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span className="text-xs text-gray-400">Temps relatif</span>
-                          <span className="text-xs font-bold" style={{ color }}>{targetPct}%</span>
-                        </div>
-                      </div>
+                {formatted.routes.map((route, idx) => (
+                  <div key={idx} className="p-3 rounded-lg bg-gray-50 border border-gray-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-gray-900 text-sm">{route.vehicle}</span>
+                      <span className="text-xs text-gray-600">{route.stops}</span>
                     </div>
-                  );
-                })}
+                    <div className="flex items-center gap-4 text-xs text-gray-700">
+                      <span>⏱️ {route.time}</span>
+                      <span>🛣️ {route.distance}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           );
