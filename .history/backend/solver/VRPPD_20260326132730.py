@@ -288,7 +288,7 @@ if __name__ == "__main__":
 
         try:
             #loss_function = MixedUsedTotalDistAndTime(alpha_time=0.5, alpha_distance=0.3, alpha_load=0.2)
-            loss_function =MixedUsedTimeAndTotalDist(alpha_time=0.7, alpha_distance=0.3, alpha_load=0.0)
+            loss_function =MixedUsedTimeAndTotalDist(alpha_time=0.5, alpha_distance=0.3, alpha_load=0.2)
             time_margin = TimeMargin(
                 before_concert=MARGIN_BEFORE_CONCERT,
                 after_concert=MARGIN_AFTER_CONCERT,

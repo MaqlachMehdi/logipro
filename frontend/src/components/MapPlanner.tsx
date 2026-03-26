@@ -14,6 +14,7 @@ interface MapPlannerProps {
 	accessToken?: string;
 	styleUrl?: string;
 	onMapLoaded?: (map: any) => void;
+	solutionVersion?: number;
 }
 
 export function MapPlanner({
@@ -22,6 +23,7 @@ export function MapPlanner({
 	spots = [],
 	routes = [],
 	onMapLoaded,
+	solutionVersion = 0,
 }: MapPlannerProps) {
 	const [vehicleRoutes, setVehicleRoutes] = useState<VehicleRoute[] | undefined>(undefined);
 	const [concertsData, setConcertsData] = useState<ConcertData[] | undefined>(undefined);
@@ -38,7 +40,7 @@ export function MapPlanner({
 			.catch(() => {
 				// No solution yet — map still works without it
 			});
-	}, []);
+	}, [solutionVersion]);
 
 	return (
 		<div style={{ width: '100%', height: 500, borderRadius: 8, overflow: 'hidden' }}>

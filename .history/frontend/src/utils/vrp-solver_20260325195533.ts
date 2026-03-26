@@ -10,40 +10,12 @@ export interface SolutionEtape {
   trajet_min: number;
 }
 
-export interface SolutionConcert {
-  concert_start: number;
-  concert_duration: number;
-  setup_duration: number;
-  teardown_duration: number;
-  instruments: string[];
-  instrument_counts: Record<string, number>;
-  venue_name: string;
-}
-
-export interface SolutionStop {
-  step: number;
-  label: string;
-  address: string;
-  action: 'Departure' | 'Delivery' | 'Recovery' | 'Return';
-  arrival_time: number | null;
-  time_window_start: number | null;
-  time_window_end: number | null;
-  volume_delta: number;
-  load_after: number | null;
-  service_time: number | null;
-  distance_from_prev: number | null;
-  travel_time_from_prev: number | null;
-  concert: SolutionConcert | null;
-}
-
 export interface SolutionVehicle {
   nom: string;
   destinations: string[];
   temps_min: number;
   distance_km: number;
   etapes: SolutionEtape[];
-  arrets: SolutionStop[];
-  capacite_m3: number;
 }
 
 export interface VRPSolution {

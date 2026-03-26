@@ -1,5 +1,4 @@
 import { useEffect, useReducer, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
 import { VolumeEstimator, FleetManager, RouteSummary, MapPlanner, SpotManager, VehicleDetail, ExportDatabase } from './components';
 import type { Spot, Vehicle, Route, AppState, GearItem } from './types';
 import { Truck, AlertCircle } from 'lucide-react';
@@ -140,6 +139,7 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lon: numb
 export default function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, createInitialState);
   const [gears, setGears] = useState<GearItem[]>(GEAR_CATALOG);
+  const [solutionVersion, setSolutionVersion] = useState(0);
 
   const persistSpots = async (spotsWithDepot: Spot[]) => {
     try {
@@ -447,28 +447,14 @@ export default function App() {
                 gears={gears}
                 selectedVehicleId={state.selectedVehicleId}
                 onSelectVehicle={(id) => dispatch({ type: 'SELECT_VEHICLE', payload: id })}
+                onSolutionReady={() => setSolutionVersion(v => v + 1)}
               />
 
               <MapPlanner
-                accessToken={'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJja2x4b2Z6b2MwMDFwMnBvN2J6b2Z6b2MwIn0.1234567890abcdef'}
-                styleUrl={undefined}
-                center={[2.3522, 48.8566]}
+                center={[48.8566, 2.3522]}
                 zoom={13}
-                terrain={true}
-                theme={'light'}
-                onMapLoaded={(map) => {
-                  try {
-                    // Add depot marker and open its popup so it's visible
-                    const m = new mapboxgl.Marker({ color: 'red' })
-                      .setLngLat([DEPOT_SPOT.lon, DEPOT_SPOT.lat])
-                      .setPopup(new mapboxgl.Popup({ offset: 12 }).setText(DEPOT_SPOT.name || 'Dépôt'))
-                      .addTo(map);
-                    m.togglePopup();
-                    console.log('Map loaded — depot marker placed');
-                  } catch (e) {
-                    console.error('Failed to add depot marker', e);
-                  }
-                }}
+                spots={state.spots}
+                solutionVersion={solutionVersion}
               />
             </div>
 
