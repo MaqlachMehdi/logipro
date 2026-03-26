@@ -965,6 +965,30 @@ app.get('/api/solution/map-data', (req, res) => {
   }
 });
 
+/**
+ * GET /api/solution/print
+ * Sert le fichier solution_terminal.html avec auto-déclenchement de l'impression.
+ */
+app.get('/api/solution/print', (req, res) => {
+  const htmlPath = path.join(__dirname, 'solver', 'solution_terminal.html');
+  if (!fs.existsSync(htmlPath)) {
+    return res.status(404).send('<h2>Aucune solution disponible. Lancez d\'abord une optimisation.</h2>');
+  }
+  try {
+    let html = fs.readFileSync(htmlPath, 'utf8');
+    // Injecte l'auto-impression au chargement de la page
+    html = html.replace(
+      '</body>',
+      '<script>window.addEventListener("load", function() { setTimeout(function() { window.print(); }, 500); });</script></body>'
+    );
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    console.error('❌ Erreur lecture solution_terminal.html:', err);
+    res.status(500).send('<h2>Erreur lors de la lecture du fichier de solution.</h2>');
+  }
+});
+
 // ========================================
 // GESTION DES ERREURS
 // ========================================

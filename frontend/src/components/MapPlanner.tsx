@@ -2,19 +2,39 @@
 import { useEffect, useState } from 'react';
 import { LeafletMap } from './LeafletMap';
 import type { VehicleRoute, ConcertData } from './LeafletMap';
-import type { Spot, Route } from '../types';
+import type { Spot, Route, Vehicle } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// Mirrors the color palette from FleetManager / RouteSummary
+const COLOR_MAP: Record<string, string> = {
+	'indigo-500': '#6366f1',
+	'emerald-500': '#10b981',
+	'amber-500':   '#f59e0b',
+	'rose-500':    '#f43f5e',
+	'cyan-500':    '#06b6d4',
+	'violet-500':  '#8b5cf6',
+	'orange-500':  '#f97316',
+	'teal-500':    '#14b8a6',
+	'blue-500':    '#3b82f6',
+	'pink-500':    '#ec4899',
+};
+
+function vehicleHex(v: Vehicle): string {
+	return COLOR_MAP[v.color] ?? '#60a5fa';
+}
 
 interface MapPlannerProps {
 	center?: [number, number];
 	zoom?: number;
 	spots?: Spot[];
 	routes?: Route[];
+	vehicles?: Vehicle[];
 	accessToken?: string;
 	styleUrl?: string;
 	onMapLoaded?: (map: any) => void;
 	solutionVersion?: number;
+	filterPlate?: string | null;
 }
 
 export function MapPlanner({
@@ -22,25 +42,41 @@ export function MapPlanner({
 	zoom = 11,
 	spots = [],
 	routes = [],
+	vehicles = [],
 	onMapLoaded,
 	solutionVersion = 0,
+	filterPlate,
 }: MapPlannerProps) {
 	const [vehicleRoutes, setVehicleRoutes] = useState<VehicleRoute[] | undefined>(undefined);
 	const [concertsData, setConcertsData] = useState<ConcertData[] | undefined>(undefined);
 
 	useEffect(() => {
+		// solutionVersion === 0 means no optimization has run yet in this session.
+		// Skip the fetch so that a stale summary.html from a previous session
+		// doesn't show old routes on startup.
+		if (solutionVersion === 0) return;
+
 		fetch(`${API_URL}/api/solution/map-data`)
 			.then((r) => r.json())
 			.then((data) => {
-				if (data.success) {
-					setVehicleRoutes(data.vehicleRoutes);
-					setConcertsData(data.concertsData);
-				}
+				if (!data.success) return;
+
+				// Replace Python-assigned colors with the Fleet Manager vehicle colors.
+				// route.plate === vehicle.name (set in server.js line: plate: v.name)
+				const remapped: VehicleRoute[] = (data.vehicleRoutes ?? []).map(
+					(route: VehicleRoute) => {
+						const match = vehicles.find((v) => v.name === route.plate);
+						return match ? { ...route, color: vehicleHex(match) } : route;
+					},
+				);
+
+				setVehicleRoutes(remapped);
+				setConcertsData(data.concertsData ?? []);
 			})
 			.catch(() => {
 				// No solution yet — map still works without it
 			});
-	}, [solutionVersion]);
+	}, [solutionVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	return (
 		<div style={{ width: '100%', height: 500, borderRadius: 8, overflow: 'hidden' }}>
@@ -52,6 +88,7 @@ export function MapPlanner({
 				vehicleRoutes={vehicleRoutes}
 				concertsData={concertsData}
 				onMapLoaded={onMapLoaded}
+				filterPlate={filterPlate}
 			/>
 		</div>
 	);

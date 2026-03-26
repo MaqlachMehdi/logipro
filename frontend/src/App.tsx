@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState } from 'react';
-import { VolumeEstimator, FleetManager, RouteSummary, MapPlanner, SpotManager, VehicleDetail, ExportDatabase } from './components';
+import { VolumeEstimator, FleetManager, RouteSummary, MapPlanner, SpotManager, VehicleDetail, ExportDatabase, SolutionResults } from './components';
 import type { Spot, Vehicle, Route, AppState, GearItem } from './types';
+import type { VRPSolution } from './utils/vrp-solver';
 import { Truck, AlertCircle } from 'lucide-react';
 import { GEAR_CATALOG } from './utils/volume-data';
 import { fetchVehicles, syncVehicles } from './utils/vehicles-api';
@@ -140,6 +141,8 @@ export default function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, createInitialState);
   const [gears, setGears] = useState<GearItem[]>(GEAR_CATALOG);
   const [solutionVersion, setSolutionVersion] = useState(0);
+  const [filterPlate, setFilterPlate] = useState<string | null>(null);
+  const [solution, setSolution] = useState<VRPSolution | null>(null);
 
   const persistSpots = async (spotsWithDepot: Spot[]) => {
     try {
@@ -447,14 +450,21 @@ export default function App() {
                 gears={gears}
                 selectedVehicleId={state.selectedVehicleId}
                 onSelectVehicle={(id) => dispatch({ type: 'SELECT_VEHICLE', payload: id })}
-                onSolutionReady={() => setSolutionVersion(v => v + 1)}
+                hasSolution={solution !== null}
+                onSolutionChange={(sol) => {
+                  setSolution(sol);
+                  setFilterPlate(null);
+                  if (sol) setSolutionVersion(v => v + 1);
+                }}
               />
 
               <MapPlanner
                 center={[48.8566, 2.3522]}
                 zoom={13}
                 spots={state.spots}
+                vehicles={state.vehicles}
                 solutionVersion={solutionVersion}
+                filterPlate={filterPlate}
               />
             </div>
 
@@ -465,6 +475,12 @@ export default function App() {
                 vehicles={state.vehicles}
                 spots={state.spots}
                 selectedVehicleId={state.selectedVehicleId}
+              />
+
+              <SolutionResults
+                solution={solution}
+                vehicles={state.vehicles}
+                onSelectMapVehicle={setFilterPlate}
               />
 
               {state.spots.length > 0 && (

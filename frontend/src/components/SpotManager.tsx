@@ -85,16 +85,16 @@ export function SpotManager({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           {spots.map((spot) => {
             const isDepot = spot.id === 'depot-permanent';
             const isEditing = editState.editingId === spot.id;
-            
+
             if (isEditing && editState.editData) {
               return (
                 <div
                   key={spot.id}
-                  className="bg-blue-50 rounded-lg p-4 border border-blue-500 space-y-3"
+                  className="col-span-2 bg-blue-50 rounded-lg p-4 border border-blue-500 space-y-3"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-semibold text-gray-900">Modifier: {spot.name}</h4>
@@ -235,7 +235,7 @@ export function SpotManager({
                 key={spot.id}
                 className={`p-3 rounded-lg border transition-all cursor-pointer ${
                   isDepot
-                    ? 'bg-red-50 border-red-500'
+                    ? 'col-span-2 bg-red-50 border-red-500'
                     : selectedSpotId === spot.id
                     ? 'bg-blue-50 border-blue-500'
                     : 'bg-gray-50 border-gray-200 hover:border-gray-300'
@@ -248,7 +248,7 @@ export function SpotManager({
                       isDepot ? 'text-blue-600' : 'text-gray-900'
                     }`}>{spot.name}</h4>
                     <p className="text-xs text-gray-600 truncate mt-1">{spot.address}</p>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-600">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-600">
                           {spot.concertTime && !isDepot && (
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />

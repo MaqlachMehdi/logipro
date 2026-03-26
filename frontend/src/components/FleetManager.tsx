@@ -102,7 +102,7 @@ export function FleetManager({ vehicles, onChange }: FleetManagerProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           {vehicles.map((vehicle) => {
             const typeConfig = VEHICLE_TYPES.find(t => t.value === vehicle.type);
             const TypeIcon = typeConfig?.icon || Truck;
@@ -113,7 +113,7 @@ export function FleetManager({ vehicles, onChange }: FleetManagerProps) {
               return (
                 <div
                   key={vehicle.id}
-                  className="bg-blue-50 rounded-lg p-4 border border-blue-500 space-y-3"
+                  className="col-span-2 bg-blue-50 rounded-lg p-4 border border-blue-500 space-y-3"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-semibold text-gray-900">Modifier: {vehicle.plate}</h4>
