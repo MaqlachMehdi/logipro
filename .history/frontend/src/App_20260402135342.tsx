@@ -146,7 +146,7 @@ export default function App() {
 
   const persistSpots = async (spotsWithDepot: Spot[]) => {
     try {
-      const persisted = await syncSpots(withDepot(spotsWithDepot));
+      const persisted = await syncSpots(spotsWithDepot);
       // ✅ withDepot garde les valeurs DB du dépôt
       dispatch({ type: 'SET_SPOTS', payload: withDepot(persisted) });
     } catch (error) {
@@ -291,7 +291,7 @@ export default function App() {
           const savedSpots = localStorage.getItem(USER_SPOTS_KEY);
           const fallbackSpots = savedSpots ? JSON.parse(savedSpots) as Spot[] : [];
           if (fallbackSpots.length > 0) {
-            const persisted = await syncSpots(withDepot(fallbackSpots));
+            const persisted = await syncSpots(removeDepot(fallbackSpots));
             if (isMounted) {
               const merged = withDepot(persisted);
               dispatch({ type: 'SET_SPOTS', payload: merged });
@@ -369,7 +369,7 @@ export default function App() {
     try {
       const [persistedGears, persistedSpots] = await Promise.all([
         syncGears(nextGears),
-        syncSpots(withDepot(nextSpots)),
+        syncSpots(removeDepot(nextSpots)),
       ]);
 
       setGears(persistedGears);

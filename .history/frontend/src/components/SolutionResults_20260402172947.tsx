@@ -55,19 +55,6 @@ const getColorHex = (color: string): string => {
   return colorMap[color] || '#60a5fa';
 };
 
-const hexToRgba = (hex: string, alpha: number): string => {
-  const normalized = hex.replace('#', '');
-  const value = normalized.length === 3
-    ? normalized.split('').map((char) => char + char).join('')
-    : normalized;
-
-  const red = parseInt(value.slice(0, 2), 16);
-  const green = parseInt(value.slice(2, 4), 16);
-  const blue = parseInt(value.slice(4, 6), 16);
-
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-};
-
 const getVehicleMaxOccupancy = (vehicle: VRPSolution['details_vehicules'][number]) => {
   const capacity = vehicle.capacite_m3 || 0;
   let peakLoad = 0;
@@ -137,7 +124,6 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
   const usedVehicleCount = solution.nb_vehicules ?? solution.details_vehicules.length;
   const gearNameById = new Map(gears.map((gear) => [gear.id, gear.name]));
   const concerts: ConcertSummaryItem[] = [...spots]
-    .filter((spot) => spot.id !== 'depot-permanent')
     .sort((left, right) => (left.concertTime ?? '').localeCompare(right.concertTime ?? ''))
     .map((spot) => {
       const instruments = spot.gearSelections
@@ -302,39 +288,35 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                         {v.distance_km.toFixed(1)} km
                       </span>
                     </div>
-                    <div className="space-y-2 mb-1">
-                      <div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${barPct}%`,
-                              background: `linear-gradient(90deg, ${hexToRgba(color, 0.68)}, ${hexToRgba(color, 0.92)})`,
-                              transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1)',
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span className="text-xs text-gray-400">Temps relatif</span>
-                          <span className="text-xs font-bold" style={{ color }}>{targetPct}%</span>
-                        </div>
+                    <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2">
+                      <div className="flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-gray-500">Volume max occupe</span>
+                        <span className="font-bold text-gray-800">
+                          {occupancy.peakLoad.toFixed(2)} m³
+                        </span>
                       </div>
-                      <div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${occupancy.peakPct}%`,
-                              background: `linear-gradient(90deg, ${hexToRgba(color, 0.88)}, ${color})`,
-                              transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1)',
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span className="text-xs text-gray-400">Occupation max</span>
-                          <span className="text-xs font-bold" style={{ color }}>{occupancy.peakPct}%</span>
-                        </div>
+                      <div className="mt-1 flex items-center justify-between gap-2 text-[11px]">
+                        <span className="text-gray-400">
+                          Capacite: {occupancy.capacity.toFixed(2)} m³
+                        </span>
+                        <span className="font-semibold" style={{ color }}>
+                          {occupancy.peakPct}% max
+                        </span>
                       </div>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${barPct}%`,
+                          background: `linear-gradient(90deg, ${color}cc, ${color})`,
+                          transition: 'width 0.9s cubic-bezier(0.4,0,0.2,1)',
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-gray-400">Temps relatif</span>
+                      <span className="text-xs font-bold" style={{ color }}>{targetPct}%</span>
                     </div>
                   </div>
                 </div>
@@ -349,7 +331,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <Card className="bg-white border-gray-200 overflow-hidden">
           <div className="h-1.5 bg-violet-600" />
           <CardHeader className="pb-2 pt-3">
-            <div className="flex items-center justify-between gap-3 w-full">
+            <div className="flex items-center justify-between">
               <CardTitle className="text-gray-900 flex items-center gap-2 text-sm">
                 <CalendarClock className="w-4 h-4 text-violet-700" />
                 <span className="text-violet-700">Concerts</span>
@@ -357,8 +339,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
               </CardTitle>
               <button
                 onClick={() => setSelectedPanel(null)}
-                className="shrink-0 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Fermer la synthese des concerts"
+                className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -368,11 +349,11 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
           <CardContent className="pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
             {concerts.map((concert, index) => (
               <div key={concert.id} className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="w-36 shrink-0 self-center text-center text-sm font-bold text-violet-700">
+                <div className="flex items-start gap-4">
+                  <div className="w-36 shrink-0 text-sm font-bold text-violet-700">
                     {concert.concertTime}
                     {concert.concertDuration > 0 && (
-                      <span className="text-violet-500 font-semibold block mt-0.5">{addMinutesToTime(concert.concertTime, concert.concertDuration)}</span>
+                      <span className="text-violet-500 font-semibold"> - {addMinutesToTime(concert.concertTime, concert.concertDuration)}</span>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -401,8 +382,8 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <Card className="bg-white border-gray-200 overflow-hidden">
           {/* Bande couleur + en-tête */}
           <div className="h-1.5" style={{ backgroundColor: selectedColor }} />
-          <CardHeader className="pb-2 pt-3 relative">
-            <div className="flex items-center justify-between pr-8">
+          <CardHeader className="pb-2 pt-3">
+            <div className="flex items-center justify-between">
               <CardTitle className="text-gray-900 flex items-center gap-2 text-sm">
                 <Navigation className="w-4 h-4" style={{ color: selectedColor }} />
                 <span style={{ color: selectedColor }}>{sv.nom}</span>
@@ -410,7 +391,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
               </CardTitle>
               <button
                 onClick={() => { setSelectedPanel(null); onSelectMapVehicle?.(null); }}
-                className="absolute right-3 top-3 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -491,40 +472,28 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                             {/* Barre arrivée — bleu clair */}
                             <div>
                               <div className="flex justify-between text-[10px] mb-0.5">
-                                <span className="font-medium flex items-center gap-1" style={{ color: hexToRgba(selectedColor, 0.8) }}>
+                                <span className="text-blue-400 font-medium flex items-center gap-1">
                                   <Package className="w-2.5 h-2.5" /> Arrivée
                                 </span>
-                                <span className="font-bold" style={{ color: hexToRgba(selectedColor, 0.8) }}>{ratioArrival.toFixed(0)}%</span>
+                                <span className="font-bold text-blue-400">{ratioArrival.toFixed(0)}%</span>
                               </div>
                               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${ratioArrival}%`,
-                                    background: ratioArrival > 80
-                                      ? '#ef4444'
-                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.45)}, ${hexToRgba(selectedColor, 0.72)})`,
-                                  }}
+                                  style={{ width: `${ratioArrival}%`, backgroundColor: ratioArrival > 80 ? '#ef4444' : '#93c5fd' }}
                                 />
                               </div>
                             </div>
-                            {/* Barre départ — même couleur, plus foncée */}
+                            {/* Barre départ — bleu foncé */}
                             <div>
                               <div className="flex justify-between text-[10px] mb-0.5">
-                                <span className="font-medium flex items-center gap-1" style={{ color: selectedColor }}>
-                                  <Package className="w-2.5 h-2.5" /> Départ
-                                </span>
-                                <span className="font-bold" style={{ color: selectedColor }}>{ratioDeparture.toFixed(0)}%</span>
+                                <span className="text-blue-700 font-medium">Départ</span>
+                                <span className="font-bold text-blue-700">{ratioDeparture.toFixed(0)}%</span>
                               </div>
                               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${ratioDeparture}%`,
-                                    background: ratioDeparture > 80
-                                      ? '#ef4444'
-                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.82)}, ${selectedColor})`,
-                                  }}
+                                  style={{ width: `${ratioDeparture}%`, backgroundColor: ratioDeparture > 80 ? '#ef4444' : '#1d4ed8' }}
                                 />
                               </div>
                             </div>

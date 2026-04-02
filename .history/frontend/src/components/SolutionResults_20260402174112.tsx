@@ -491,40 +491,28 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                             {/* Barre arrivée — bleu clair */}
                             <div>
                               <div className="flex justify-between text-[10px] mb-0.5">
-                                <span className="font-medium flex items-center gap-1" style={{ color: hexToRgba(selectedColor, 0.8) }}>
+                                <span className="text-blue-400 font-medium flex items-center gap-1">
                                   <Package className="w-2.5 h-2.5" /> Arrivée
                                 </span>
-                                <span className="font-bold" style={{ color: hexToRgba(selectedColor, 0.8) }}>{ratioArrival.toFixed(0)}%</span>
+                                <span className="font-bold text-blue-400">{ratioArrival.toFixed(0)}%</span>
                               </div>
                               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${ratioArrival}%`,
-                                    background: ratioArrival > 80
-                                      ? '#ef4444'
-                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.45)}, ${hexToRgba(selectedColor, 0.72)})`,
-                                  }}
+                                  style={{ width: `${ratioArrival}%`, backgroundColor: ratioArrival > 80 ? '#ef4444' : '#93c5fd' }}
                                 />
                               </div>
                             </div>
-                            {/* Barre départ — même couleur, plus foncée */}
+                            {/* Barre départ — bleu foncé */}
                             <div>
                               <div className="flex justify-between text-[10px] mb-0.5">
-                                <span className="font-medium flex items-center gap-1" style={{ color: selectedColor }}>
-                                  <Package className="w-2.5 h-2.5" /> Départ
-                                </span>
-                                <span className="font-bold" style={{ color: selectedColor }}>{ratioDeparture.toFixed(0)}%</span>
+                                <span className="text-blue-700 font-medium">Départ</span>
+                                <span className="font-bold text-blue-700">{ratioDeparture.toFixed(0)}%</span>
                               </div>
                               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${ratioDeparture}%`,
-                                    background: ratioDeparture > 80
-                                      ? '#ef4444'
-                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.82)}, ${selectedColor})`,
-                                  }}
+                                  style={{ width: `${ratioDeparture}%`, backgroundColor: ratioDeparture > 80 ? '#ef4444' : '#1d4ed8' }}
                                 />
                               </div>
                             </div>
