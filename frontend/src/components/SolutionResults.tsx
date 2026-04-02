@@ -6,6 +6,24 @@ import { Clock, MapPin, Navigation, Package, TrendingUp, X, Printer } from 'luci
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const downloadPdf = async () => {
+  const res = await fetch(`${API_URL}/api/solution/pdf`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Erreur inconnue' }));
+    alert(`Impossible de générer le PDF : ${err.error ?? err}`);
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'resume_tournee.pdf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
 const DETAIL_PALETTE = [
   { bg: 'from-blue-50 to-violet-50', border: 'border-blue-200', accent: '#3b82f6', accentDark: '#1d4ed8' },
   { bg: 'from-violet-50 to-blue-50', border: 'border-violet-200', accent: '#7c3aed', accentDark: '#5b21b6' },
@@ -79,12 +97,12 @@ export function SolutionResults({ solution, vehicles, onSelectMapVehicle }: Solu
               Résultat d'optimisation
             </CardTitle>
             <button
-              onClick={() => window.open(`${API_URL}/api/solution/print`, '_blank')}
+              onClick={downloadPdf}
               className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
-              title="Imprimer le résumé de la tournée"
+              title="Télécharger le résumé en PDF"
             >
               <Printer className="w-3.5 h-3.5" />
-              Imprimer le résumé
+              Télécharger le résumé
             </button>
           </div>
         </CardHeader>
@@ -109,7 +127,7 @@ export function SolutionResults({ solution, vehicles, onSelectMapVehicle }: Solu
           </div>
 
           {/* Cartes véhicules */}
-          <div className="space-y-1">
+          <div className="grid grid-cols-2 gap-2">
             {solution.details_vehicules.map((v, idx) => {
               const vehicle = vehicles.find(veh => veh.name === v.nom);
               const color = vehicle ? getColorHex(vehicle.color) : '#60a5fa';
@@ -213,8 +231,6 @@ export function SolutionResults({ solution, vehicles, onSelectMapVehicle }: Solu
                 Departure: 'bg-gray-200 text-gray-600', Return: 'bg-gray-200 text-gray-600',
                 Delivery: 'bg-blue-100 text-blue-700', Recovery: 'bg-violet-100 text-violet-700',
               };
-              const chargeRatio = sv.capacite_m3 > 0 && arret.load_after != null
-                ? (arret.load_after / sv.capacite_m3) * 100 : null;
 
               return (
                 <div key={aIdx} className={`rounded-xl overflow-hidden border ${isDepot ? 'border-gray-200 bg-white/60' : `${palette.border} bg-white/80`}`}>
@@ -264,36 +280,48 @@ export function SolutionResults({ solution, vehicles, onSelectMapVehicle }: Solu
                   )}
 
                   {!isDepot && arret.load_after != null && (
-                    <div className="px-3 pb-2 space-y-1">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Package className="w-3 h-3" />
-                          <span>
-                            {arret.volume_delta !== 0 && (
-                              <span className="font-medium">
-                                {arret.volume_delta < 0 ? `−${Math.abs(arret.volume_delta).toFixed(2)}` : `+${arret.volume_delta.toFixed(2)}`} m³
-                              </span>
-                            )}
-                            {' '}→ charge : <span className="font-semibold text-gray-800">{arret.load_after.toFixed(2)} m³</span>
-                          </span>
-                        </div>
-                        {chargeRatio != null && (
-                          <span className="font-bold" style={{ color: chargeRatio > 80 ? '#ef4444' : palette.accent }}>
-                            {chargeRatio.toFixed(0)}%
-                          </span>
-                        )}
-                      </div>
-                      {chargeRatio != null && (
-                        <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(chargeRatio, 100)}%`,
-                              backgroundColor: chargeRatio > 80 ? '#ef4444' : palette.accent,
-                            }}
-                          />
-                        </div>
-                      )}
+                    <div className="px-3 pb-2 space-y-1.5">
+                      {(() => {
+                        const cap = sv.capacite_m3;
+                        // load_after from backend = load at ARRIVAL (before operation)
+                        // actual departure load = load_after + volume_delta (volume_delta always negative)
+                        const loadArrival   = arret.load_after;
+                        const loadDeparture = arret.load_after + arret.volume_delta;
+                        const ratioArrival  = cap > 0 ? Math.min((loadArrival  / cap) * 100, 100) : 0;
+                        const ratioDeparture = cap > 0 ? Math.min((loadDeparture / cap) * 100, 100) : 0;
+                        return (
+                          <>
+                            {/* Barre arrivée — bleu clair */}
+                            <div>
+                              <div className="flex justify-between text-[10px] mb-0.5">
+                                <span className="text-blue-400 font-medium flex items-center gap-1">
+                                  <Package className="w-2.5 h-2.5" /> Arrivée
+                                </span>
+                                <span className="font-bold text-blue-400">{ratioArrival.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{ width: `${ratioArrival}%`, backgroundColor: ratioArrival > 80 ? '#ef4444' : '#93c5fd' }}
+                                />
+                              </div>
+                            </div>
+                            {/* Barre départ — bleu foncé */}
+                            <div>
+                              <div className="flex justify-between text-[10px] mb-0.5">
+                                <span className="text-blue-700 font-medium">Départ</span>
+                                <span className="font-bold text-blue-700">{ratioDeparture.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{ width: `${ratioDeparture}%`, backgroundColor: ratioDeparture > 80 ? '#ef4444' : '#1d4ed8' }}
+                                />
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
 

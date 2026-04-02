@@ -966,26 +966,42 @@ app.get('/api/solution/map-data', (req, res) => {
 });
 
 /**
- * GET /api/solution/print
- * Sert le fichier solution_terminal.html avec auto-déclenchement de l'impression.
+ * GET /api/solution/pdf
+ * Génère un PDF du résumé de tournée via Puppeteer et le renvoie en téléchargement direct.
  */
-app.get('/api/solution/print', (req, res) => {
+app.get('/api/solution/pdf', async (req, res) => {
   const htmlPath = path.join(__dirname, 'solver', 'solution_terminal.html');
   if (!fs.existsSync(htmlPath)) {
-    return res.status(404).send('<h2>Aucune solution disponible. Lancez d\'abord une optimisation.</h2>');
+    return res.status(404).json({ success: false, error: 'Aucune solution disponible. Lancez d\'abord une optimisation.' });
   }
+
+  let browser;
   try {
-    let html = fs.readFileSync(htmlPath, 'utf8');
-    // Injecte l'auto-impression au chargement de la page
-    html = html.replace(
-      '</body>',
-      '<script>window.addEventListener("load", function() { setTimeout(function() { window.print(); }, 500); });</script></body>'
-    );
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
+    const puppeteer = require('puppeteer');
+    browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+
+    const pdfData = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '1cm', bottom: '1cm', left: '1cm', right: '1cm' },
+    });
+
+    // Puppeteer v22+ retourne Uint8Array — conversion en Buffer nécessaire pour Express
+    const pdfBuffer = Buffer.from(pdfData);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="resume_tournee.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.end(pdfBuffer);
   } catch (err) {
-    console.error('❌ Erreur lecture solution_terminal.html:', err);
-    res.status(500).send('<h2>Erreur lors de la lecture du fichier de solution.</h2>');
+    console.error('❌ Erreur génération PDF:', err);
+    res.status(500).json({ success: false, error: 'Erreur lors de la génération du PDF' });
+  } finally {
+    if (browser) await browser.close();
   }
 });
 
