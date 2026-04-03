@@ -1,3 +1,5 @@
 PuLP==3.3.0
 requests==2.32.5
 tqdm
+questionary
+highspy==1.13.1
