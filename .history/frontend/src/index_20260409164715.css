@@ -53,7 +53,7 @@ select {
   font-family: var(--font-family-app);
   font-size: var(--font-size-title-section);
   line-height: var(--line-height-title-section);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
   color: #111827;
 }
@@ -62,7 +62,7 @@ select {
   font-family: var(--font-family-app);
   font-size: var(--font-size-title-subsection);
   line-height: var(--line-height-title-subsection);
-  font-weight: 650;
+  font-weight: 800;
   letter-spacing: -0.01em;
   color: #111827;
 }
@@ -80,7 +80,7 @@ select {
   font-family: var(--font-family-app);
   font-size: calc(var(--font-size-title-subsection) * 0.9);
   line-height: calc(var(--line-height-title-subsection) * 0.9);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: -0.005em;
   color: #6b7280;
 }

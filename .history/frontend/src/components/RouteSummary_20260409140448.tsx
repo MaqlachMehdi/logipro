@@ -141,7 +141,7 @@ export function RouteSummary({
                 }`}
               >
                 <div className="app-title-subsection">{cfg.label}</div>
-                <div className="sub_title_subsection">{cfg.description}</div>
+                <div className="app-text-meta">{cfg.description}</div>
               </button>
             ))}
           </div>
@@ -151,7 +151,7 @@ export function RouteSummary({
         <Button
           onClick={handleOptimize}
           disabled={isOptimizing || !spots.length || !vehicles.length}
-          className="bouton_add w-full bg-white hover:bg-gray-100 text-gray-900"
+          className="w-full bg-white hover:bg-gray-100 text-gray-500"
         >
           {isOptimizing ? (
             <><Loader className="w-4 h-4 mr-2 animate-spin" />Optimisation en cours...</>

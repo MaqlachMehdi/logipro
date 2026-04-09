@@ -235,13 +235,13 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                   {addError && <p className="text-xs text-red-600">{addError}</p>}
 
                   <div className="flex items-center gap-2 pt-1">
-                    <Button size="sm" className="bouton_add h-8 flex-1 !bg-white !hover:bg-gray-100 !text-gray-900 border border-gray-300" onClick={handleAddGear}>
+                    <Button size="sm" className="h-8 flex-1 !bg-white !hover:bg-gray-100 !text-gray-500 border border-gray-300" onClick={handleAddGear}>
                       Ajouter
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="bouton_add h-8 border-gray-300 text-gray-900 hover:bg-gray-100"
+                      className="h-8"
                       onClick={() => {
                         setIsAddMenuOpen(false);
                         setAddError('');
@@ -306,10 +306,10 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                     return (
                       <div key={gear.id} className="flex items-center gap-2">
                         <div className="flex-1 min-w-0">
-                          <span className="sub_title_subsection block truncate">{gear.name}</span>
+                          <Label className="text-xs text-gray-600 truncate block">{gear.name}</Label>
                           <span className="text-[10px] text-gray-500">{gear.volume}m³</span>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1">
+                        <div className="flex shrink-0 items-center gap-0.5">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -323,8 +323,8 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                             min="0"
                             value={quantity}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateQuantity(gear.id, parseInt(e.target.value) || 0)}
-                            style={{ width: '6rem' }}
-                            className="input-number-centered h-6 !w-16 min-w-0 bg-white border-gray-300 px-0 text-sm text-gray-900"
+                            style={{ width: '2rem' }}
+                            className="h-6 !w-8 min-w-0 text-center bg-white border-gray-300 px-0 text-sm text-gray-900"
                           />
                           <Button
                             variant="ghost"

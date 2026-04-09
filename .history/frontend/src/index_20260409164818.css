@@ -80,7 +80,7 @@ select {
   font-family: var(--font-family-app);
   font-size: calc(var(--font-size-title-subsection) * 0.9);
   line-height: calc(var(--line-height-title-subsection) * 0.9);
-  font-weight: 700;
+  font-weight: 900;
   letter-spacing: -0.005em;
   color: #6b7280;
 }

@@ -369,7 +369,7 @@ export function SpotManager({
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
-                className="bouton_add flex-1 bg-white hover:bg-gray-100 text-gray-900"
+                className="flex-1 bg-white hover:bg-gray-100 text-gray-500"
                 onClick={handleAdd}
               >
                 Ajouter
@@ -377,7 +377,7 @@ export function SpotManager({
               <Button
                 size="sm"
                 variant="outline"
-                className="bouton_add border-gray-300 text-gray-900 hover:bg-gray-100"
+                className="border-gray-300 text-gray-900 hover:bg-gray-100"
                 onClick={() => setIsAdding(false)}
               >
                 Annuler
@@ -388,7 +388,7 @@ export function SpotManager({
           <Button
             variant="outline"
             size="sm"
-            className="bouton_add w-full border-dashed border-gray-300 text-gray-900 hover:text-gray-900 hover:border-blue-400 hover:bg-blue-50"
+            className="w-full border-dashed border-gray-300 text-gray-600 hover:text-gray-900 hover:border-blue-400 hover:bg-blue-50"
             onClick={() => { setIsAdding(true); setGeocodeError(null); }}
           >
             <Plus className="w-4 h-4 mr-2" />
