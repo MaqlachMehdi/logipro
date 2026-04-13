@@ -99,7 +99,7 @@ export function GearManager({ gearCatalog, onAddGear, onDeleteGear }: GearManage
               >
                 <div className="min-w-0">
                   <span className="text-sm text-gray-800 block truncate">{gear.name}</span>
-                  <span className="number_subtitle block">{gear.volume}m³</span>
+                  <span className="number_subtitle">{gear.volume}m³</span>
                 </div>
                 <ActionButtons onDelete={() => onDeleteGear(gear.id)} />
               </div>

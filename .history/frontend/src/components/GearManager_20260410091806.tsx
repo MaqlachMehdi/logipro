@@ -74,7 +74,7 @@ export function GearManager({ gearCatalog, onAddGear, onDeleteGear }: GearManage
               placeholder="Ex: 1.5"
               value={newVolume}
               onChange={(e) => setNewVolume(e.target.value)}
-              className="bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
+              className="bg-white border-gray-300 focus:ring-blue-500 !text-xs !leading-4 !font-normal !tracking-[-0.005em] !text-gray-600 [font-variant-numeric:tabular-nums]"
             />
           </div>
 
