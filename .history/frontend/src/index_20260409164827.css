@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+:root {
+  --font-family-app: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-title-section: 1.125rem;
+  --line-height-title-section: 1.5rem;
+  --font-size-title-subsection: 1rem;
+  --line-height-title-subsection: 1.375rem;
+  --font-size-label: 0.75rem;
+  --line-height-label: 1rem;
+  --font-size-meta: 0.75rem;
+  --line-height-meta: 1rem;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  background-color: #f8f9fa;
+  color: #1a1a1a;
+  font-family: var(--font-family-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app-title-section {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-title-section);
+  line-height: var(--line-height-title-section);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #111827;
+}
+
+.app-title-subsection {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-title-subsection);
+  line-height: var(--line-height-title-subsection);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #111827;
+}
+
+.bouton_add {
+  font-family: var(--font-family-app);
+  font-size: calc(var(--font-size-title-subsection) * 1.15);
+  line-height: calc(var(--line-height-title-subsection) * 1.1);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #111827;
+}
+
+.sub_title_subsection {
+  font-family: var(--font-family-app);
+  font-size: calc(var(--font-size-title-subsection) * 0.9);
+  line-height: calc(var(--line-height-title-subsection) * 0.9);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: #6b7280;
+}
+
+.app-text-label {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: #374151;
+}
+
+.app-text-eyebrow {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #374151;
+}
+
+.app-text-meta {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  color: #6b7280;
+}
+
+.input-number-centered {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.input-number-centered::-webkit-outer-spin-button,
+.input-number-centered::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+/* global button reset : ne pas forcer une couleur sombre */
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  /* laisser Tailwind contrôler le font-weight */
+  /* font-weight: 500; */
+  font-family: inherit;
+  background-color: transparent;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
