@@ -4,25 +4,9 @@ import { LeafletMap } from './LeafletMap';
 import type { VehicleRoute, ConcertData } from './LeafletMap';
 import type { Spot, Route, Vehicle } from '../types';
 
+import { getVehicleHex } from '../config/vehicle-colors';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-// Mirrors the color palette from FleetManager / RouteSummary
-const COLOR_MAP: Record<string, string> = {
-	'indigo-500': '#6366f1',
-	'emerald-500': '#10b981',
-	'amber-500':   '#f59e0b',
-	'rose-500':    '#f43f5e',
-	'cyan-500':    '#06b6d4',
-	'violet-500':  '#8b5cf6',
-	'orange-500':  '#f97316',
-	'teal-500':    '#14b8a6',
-	'blue-500':    '#3b82f6',
-	'pink-500':    '#ec4899',
-};
-
-function vehicleHex(v: Vehicle): string {
-	return COLOR_MAP[v.color] ?? '#60a5fa';
-}
 
 interface MapPlannerProps {
 	center?: [number, number];
@@ -66,7 +50,7 @@ export function MapPlanner({
 				const remapped: VehicleRoute[] = (data.vehicleRoutes ?? []).map(
 					(route: VehicleRoute) => {
 						const match = vehicles.find((v) => v.name === route.plate);
-						return match ? { ...route, color: vehicleHex(match) } : route;
+						return match ? { ...route, color: getVehicleHex(match.color) } : route;
 					},
 				);
 

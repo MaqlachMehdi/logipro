@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from 'react';
-import { VolumeEstimator, FleetManager, RouteSummary, MapPlanner, SpotManager, VehicleDetail, ExportDatabase, SolutionResults } from './components';
+import { VolumeEstimator, FleetManager, RouteSummary, MapPlanner, SpotManager, ExportDatabase, SolutionResults } from './components';
 import type { Spot, Vehicle, Route, AppState, GearItem } from './types';
 import type { VRPSolution } from './utils/vrp-solver';
 import { Truck, AlertCircle } from 'lucide-react';
@@ -470,12 +470,6 @@ export default function App() {
 
             {/* ── RIGHT PANEL – Details & Export ── */}
             <div className="col-span-12 lg:col-span-3 space-y-6">
-              <VehicleDetail
-                routes={state.routes}
-                vehicles={state.vehicles}
-                spots={state.spots}
-                selectedVehicleId={state.selectedVehicleId}
-              />
 
               <SolutionResults
                 solution={solution}

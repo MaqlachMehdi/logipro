@@ -7,6 +7,7 @@ import { Button } from './ui/button';
 import { ActionButtons } from './ui/ActionButtons';
 import { Truck, Car, Van, Plus } from 'lucide-react';
 import { useEditState } from '../hooks/useEditState';
+import { colorKeyByIndex, getVehicleColor } from '../config/vehicle-colors';
 
 interface FleetManagerProps {
   vehicles: Vehicle[];
@@ -17,11 +18,6 @@ const VEHICLE_TYPES = [
   { value: 'car' as VehicleType, label: 'Voiture', icon: Car, defaultVolume: 3 },
   { value: 'van' as VehicleType, label: 'Camionette', icon: Van, defaultVolume: 15 },
   { value: 'truck' as VehicleType, label: 'Camion', icon: Truck, defaultVolume: 35 },
-];
-
-const COLORS = [
-  'indigo-500', 'emerald-500', 'amber-500', 'rose-500', 
-  'cyan-500', 'violet-500', 'orange-500', 'teal-500'
 ];
 
 const getTypeColor = (type: VehicleType) => {
@@ -44,15 +40,12 @@ export function FleetManager({ vehicles, onChange }: FleetManagerProps) {
   const handleAdd = () => {
     if (!newVehicle.name) return;
 
-    // Auto-assign color based on current count
-    const colorIndex = vehicles.length % COLORS.length;
-    
     const vehicle: Vehicle = {
       id: `v-${Date.now()}`,
       name: newVehicle.name,
       type: newVehicle.type,
       capacity: newVehicle.capacity,
-      color: COLORS[colorIndex],
+      color: colorKeyByIndex(vehicles.length),
       isAvailable: true,
     };
 
@@ -199,27 +192,32 @@ export function FleetManager({ vehicles, onChange }: FleetManagerProps) {
               );
             }
 
+            const vc = getVehicleColor(vehicle.color);
+            const isAvailable = vehicle.isAvailable !== false;
+
             return (
               <div
                 key={vehicle.id}
                 onClick={() => handleToggleAvailability(vehicle.id)}
-                className={`p-3 rounded-lg border-2 transition-all cursor-pointer select-none ${
-                  vehicle.isAvailable === false
-                    ? 'bg-gray-50 border-gray-200 hover:border-gray-300'
-                    : 'bg-blue-50/40 border-blue-300 hover:border-blue-400'
-                }`}
+                className="p-3 rounded-lg border-2 transition-all cursor-pointer select-none"
+                style={{
+                  backgroundColor: isAvailable ? vc.light : '#f9fafb',
+                  borderColor: isAvailable ? vc.hex : '#d1d5db',
+                }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <TypeIcon className={`w-4 h-4 ${vehicle.isAvailable === false ? 'text-gray-400' : 'text-blue-500'}`} />
-                      <h4 className={`app-title-subsection ${vehicle.isAvailable === false ? 'text-gray-400' : 'text-gray-900'}`}>{vehicle.name}</h4>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ml-auto mr-2 ${
-                        vehicle.isAvailable === false
-                          ? 'bg-gray-100 text-gray-400'
-                          : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        {vehicle.isAvailable === false ? 'Indisponible' : 'Disponible'}
+                      <TypeIcon className="w-4 h-4" style={{ color: isAvailable ? vc.hex : '#9ca3af' }} />
+                      <h4 className="app-title-subsection" style={{ color: isAvailable ? '#111827' : '#9ca3af' }}>{vehicle.name}</h4>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full font-semibold ml-auto mr-2"
+                        style={isAvailable
+                          ? { backgroundColor: vc.light, color: vc.dark }
+                          : { backgroundColor: '#f3f4f6', color: '#9ca3af' }
+                        }
+                      >
+                        {isAvailable ? 'Disponible' : 'Indisponible'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

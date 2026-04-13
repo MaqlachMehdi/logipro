@@ -3,9 +3,10 @@ import React from 'react';
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`
-      rounded-lg border border-gray-200 bg-white w-full
+      rounded-xl overflow-hidden border border-gray-200 bg-white w-full
       ${className}
     `}>
+      <div className="h-1" style={{ backgroundColor: 'var(--color-B)' }} />
       {children}
     </div>
   );
@@ -25,7 +26,7 @@ export function CardContent({ children, className = '' }: { children: React.Reac
 export function CardHeader({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`
-      px-4 pt-4 flex items-center justify-between
+      px-4 pt-5 pb-3 flex items-center justify-between
       ${className}
     `}>
       {children}
@@ -36,7 +37,7 @@ export function CardHeader({ children, className = '' }: { children: React.React
 export function CardTitle({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <h2 className={`
-      app-title-section text-gray-900
+      app-title-section text-gray-900 flex items-center gap-2.5
       ${className}
     `}>
       {children}

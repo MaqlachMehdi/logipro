@@ -50,6 +50,26 @@
   --color-accent-fleet: #f59e0b;
   --color-accent-optimization: #10b981;
   --color-accent-details: var(--color-slate-600);
+
+  /* ── Vehicle / accent palette ──
+     Source of truth: src/config/vehicle-colors.ts */
+  --color-V: #66B0B7;
+  --color-B: #6688B7;
+  --color-M: #6D66B7;
+  --color-R: #B76D66;
+  --color-O: #B0B766;
+
+  --color-V-dark: #4A8A90;
+  --color-B-dark: #4A6690;
+  --color-M-dark: #504A90;
+  --color-R-dark: #904A45;
+  --color-O-dark: #8A9045;
+
+  --color-V-light: #EDF6F7;
+  --color-B-light: #EDF1F7;
+  --color-M-light: #EEEDF7;
+  --color-R-light: #F7EDEC;
+  --color-O-light: #F6F7ED;
 }
 
 * {

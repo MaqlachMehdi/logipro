@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
 import { Button } from './ui/button';
 import { MapPin, TrendingUp, Zap, AlertCircle, Loader, Clock } from 'lucide-react';
+import { getVehicleColor, hexToRgba } from '../config/vehicle-colors';
 
 interface RouteSummaryProps {
   routes: Route[];
@@ -29,14 +30,6 @@ const CONFIGURATIONS: Record<ConfigType, { label: string; description: string }>
   distance: { label: 'Distance Min', description: 'Minimiser km' }
 };
 
-const getColorHex = (color: string) => {
-  const colorMap: Record<string, string> = {
-    'indigo-500': '#6366f1', 'emerald-500': '#10b981', 'amber-500': '#f59e0b',
-    'rose-500': '#f43f5e', 'cyan-500': '#06b6d4', 'violet-500': '#8b5cf6',
-    'orange-500': '#f97316', 'teal-500': '#14b8a6',
-  };
-  return colorMap[color] || '#60a5fa';
-};
 
 export function RouteSummary({
   routes,
@@ -183,18 +176,20 @@ export function RouteSummary({
               {routes.map((route) => {
                 const vehicle = vehicles.find(v => v.id === route.vehicleId);
                 if (!vehicle) return null;
-                const color = getColorHex(vehicle.color);
+                const vc = getVehicleColor(vehicle.color);
+                const color = vc.hex;
                 const utilization = barWidths[route.vehicleId] ?? 0;
+                const isSelected = selectedVehicleId === route.vehicleId;
 
                 return (
                   <div
                     key={route.vehicleId}
-                    className={`rounded-xl border-2 cursor-pointer transition-all overflow-hidden ${
-                      selectedVehicleId === route.vehicleId
-                        ? 'border-blue-400 shadow-md shadow-blue-100'
-                        : 'border-gray-100 hover:border-blue-200 hover:shadow-sm'
-                    }`}
-                    onClick={() => onSelectVehicle(selectedVehicleId === route.vehicleId ? null : route.vehicleId)}
+                    className="rounded-xl border-2 cursor-pointer transition-all overflow-hidden"
+                    style={{
+                      borderColor: isSelected ? color : '#f3f4f6',
+                      boxShadow: isSelected ? `0 0 0 1px ${hexToRgba(color, 0.25)}, 0 4px 12px ${hexToRgba(color, 0.12)}` : undefined,
+                    }}
+                    onClick={() => onSelectVehicle(isSelected ? null : route.vehicleId)}
                   >
                     <div className="h-1" style={{ backgroundColor: color }} />
                     <div className="p-3 bg-white">
@@ -222,7 +217,7 @@ export function RouteSummary({
                           className="h-full rounded-full transition-all duration-700"
                           style={{
                             width: `${utilization}%`,
-                            background: `linear-gradient(90deg, ${color}cc, ${color})`,
+                            background: `linear-gradient(90deg, ${hexToRgba(color, 0.75)}, ${color})`,
                           }}
                         />
                       </div>
