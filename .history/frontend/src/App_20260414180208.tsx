@@ -401,8 +401,8 @@ export default function App() {
                 <p className="text-xs text-gray-600" style={{ paddingTop: '0.5em' }}>Optimisateur de tournées événementielles</p>
               </div>
             </div>
-            <div className="text-right" style={{ paddingInline: '2em', fontSize: '1.400rem' }}>
-              <div className="text-2xl font-bold text-blue-600">{totalVolume.toFixed(1)} m³</div>
+            <div className="text-right" style={{ paddingInline: '2em' }}>
+              <div className="text-2xl font-bold text-gray-900">{totalVolume.toFixed(1)} m³</div>
               <div className="text-xs text-gray-600">Volume total</div>
             </div>
           </div>

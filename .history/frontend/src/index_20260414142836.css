@@ -3,7 +3,7 @@
 :root {
   --font-family-app: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-size-title-section: 1.400rem;
-  --line-height-title-section: 2.8rem;
+  --line-height-title-section: 2.5rem;
   --font-size-title-subsection: 1.15rem;
   --line-height-title-subsection: 1.575rem;
   --font-size-label: 0.75rem;
@@ -139,7 +139,6 @@ select {
   font-weight: 650;
   letter-spacing: -0.01em;
   color: var(--color-text-primary);
-  transform : translateX(0.2em);
 }
 
 .bouton_add {

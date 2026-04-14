@@ -116,7 +116,7 @@ select {
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--color-text-primary);
-  transform: translateX(0.3em);
+  transform: translateX(0.4em);
 }
 .app-title-section svg {
   width: 1.3em;

@@ -390,18 +390,16 @@ export default function App() {
       {/* ===== Header ===== */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-6 py-3 shadow-sm">
         {/* 2️⃣  <-- max‑w‑7xl remplacé par max‑w‑full pour occuper toute la largeur */}
-        <div className="max-w-full mx-auto">
+        <div className="max-w-full mx-auto px-6 sm:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center" style={{ paddingInline: '2em' }}>
-                <Truck className="w-14 h-14 text-blue-600 flex-shrink-0" />
-              </div>
+              <Truck className="w-6 h-6 text-blue-600 flex-shrink-0" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">RegieTour</h1>
-                <p className="text-xs text-gray-600" style={{ paddingTop: '0.5em' }}>Optimisateur de tournées événementielles</p>
+                <p className="text-xs text-gray-600">Optimisateur de tournées événementielles</p>
               </div>
             </div>
-            <div className="text-right" style={{ paddingInline: '2em', fontSize: '1.400rem' }}>
+              <div className="text-right pr-10">
               <div className="text-2xl font-bold text-blue-600">{totalVolume.toFixed(1)} m³</div>
               <div className="text-xs text-gray-600">Volume total</div>
             </div>

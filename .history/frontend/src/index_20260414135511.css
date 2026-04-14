@@ -3,9 +3,9 @@
 :root {
   --font-family-app: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-size-title-section: 1.400rem;
-  --line-height-title-section: 2.8rem;
+  --line-height-title-section: 2.0rem;
   --font-size-title-subsection: 1.15rem;
-  --line-height-title-subsection: 1.575rem;
+  --line-height-title-subsection: 1.475rem;
   --font-size-label: 0.75rem;
   --line-height-label: 1rem;
   --font-size-meta: 0.75rem;
@@ -116,13 +116,11 @@ select {
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--color-text-primary);
-  transform: translateX(0.3em);
 }
 .app-title-section svg {
-  width: 1.3em;
-  height: 1.3em;
+  width: 1em;
+  height: 1em;
   flex-shrink: 0;
-  transform: translateX(0.1em);
 }
 
 .app-title-section .title-emoji {
@@ -139,7 +137,6 @@ select {
   font-weight: 650;
   letter-spacing: -0.01em;
   color: var(--color-text-primary);
-  transform : translateX(0.2em);
 }
 
 .bouton_add {

@@ -3,10 +3,10 @@ import React from 'react';
 export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={`
-      rounded-xl overflow-hidden border border-gray-200 bg-white w-full
+      rounded-xl overflow-hidden border border-gray-300 bg-white w-full
       ${className}
     `}>
-      <div className="h-2" style={{ backgroundColor: 'var(--color-B)' }} />
+      <div className="h-1" style={{ backgroundColor: 'var(--color-B)' }} />
       {children}
     </div>
   );

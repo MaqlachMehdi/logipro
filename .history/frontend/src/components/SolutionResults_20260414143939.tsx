@@ -173,7 +173,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
 
           {/* Stats globales */}
           <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
-            <h3 className="app-title-subsection uppercase text-center mb-2">{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
+            <h3 className="app-title-subsection uppercase mb-2">{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Véhicules utilisés', value: `${usedVehicleCount}/${availableVehicles.length}`, color: 'text-violet-700' },

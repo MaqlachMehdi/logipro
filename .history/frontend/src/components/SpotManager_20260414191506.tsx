@@ -252,7 +252,7 @@ export function SpotManager({
                     <h4 className={`app-title-subsection truncate ${
                       isDepot ? 'text-blue-600' : 'text-gray-900'
                     }`}>{spot.name}</h4>
-                    <p className="text-xs text-gray-600 truncate mt-1" style={{ paddingLeft: '0.25em' }}>{spot.address}</p>
+                    <p className="text-xs text-gray-600 truncate mt-1" style={{ paddingLeft: '1em' }}>{spot.address}</p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
                           {spot.concertTime && !isDepot && (
                             <span className="number_subtitle">

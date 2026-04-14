@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import type { GearItem, Spot, Vehicle } from '../types';
 import type { VRPSolution } from '../utils/vrp-solver';
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
-import { CalendarClock, Clock, MapPin, Navigation, TrendingUp, X, Printer } from 'lucide-react';
-import { getVehicleColor, hexToRgba, type VehicleColor } from '../config/vehicle-colors';
+import { CalendarClock, Clock, MapPin, Navigation, Package, TrendingUp, X, Printer } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -25,6 +24,12 @@ const downloadPdf = async () => {
   URL.revokeObjectURL(url);
 };
 
+const DETAIL_PALETTE = [
+  { bg: 'from-blue-50 to-violet-50', border: 'border-blue-200', accent: '#3b82f6', accentDark: '#1d4ed8' },
+  { bg: 'from-violet-50 to-blue-50', border: 'border-violet-200', accent: '#7c3aed', accentDark: '#5b21b6' },
+  { bg: 'from-indigo-50 to-blue-50', border: 'border-indigo-200', accent: '#4f46e5', accentDark: '#3730a3' },
+  { bg: 'from-blue-50 to-indigo-50', border: 'border-blue-200', accent: '#2563eb', accentDark: '#1e40af' },
+];
 
 const minToHHMM = (min: number): string => {
   const h = Math.floor(min / 60) % 24;
@@ -41,6 +46,27 @@ const addMinutesToTime = (time: string, minutesToAdd: number): string => {
   return `${String(nextHours).padStart(2, '0')}:${String(nextMinutes).padStart(2, '0')}`;
 };
 
+const getColorHex = (color: string): string => {
+  const colorMap: Record<string, string> = {
+    'indigo-500': '#6366f1', 'emerald-500': '#10b981', 'amber-500': '#f59e0b',
+    'rose-500': '#f43f5e', 'cyan-500': '#06b6d4', 'violet-500': '#8b5cf6',
+    'orange-500': '#f97316', 'teal-500': '#14b8a6',
+  };
+  return colorMap[color] || '#60a5fa';
+};
+
+const hexToRgba = (hex: string, alpha: number): string => {
+  const normalized = hex.replace('#', '');
+  const value = normalized.length === 3
+    ? normalized.split('').map((char) => char + char).join('')
+    : normalized;
+
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+};
 
 const getVehicleMaxOccupancy = (vehicle: VRPSolution['details_vehicules'][number]) => {
   const capacity = vehicle.capacite_m3 || 0;
@@ -133,9 +159,9 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
   const selectedVehicleIndex = selectedPanel?.type === 'vehicle' ? selectedPanel.index : null;
   const showConcertsPanel = selectedPanel?.type === 'concerts';
   const sv = selectedVehicleIndex !== null ? solution.details_vehicules[selectedVehicleIndex] : null;
+  const palette = selectedVehicleIndex !== null ? DETAIL_PALETTE[selectedVehicleIndex % DETAIL_PALETTE.length] : DETAIL_PALETTE[0];
   const selectedVehicle = sv ? vehicles.find(v => v.name === sv.nom) : null;
-  const selectedVc: VehicleColor = selectedVehicle ? getVehicleColor(selectedVehicle.color) : getVehicleColor('');
-  const selectedColor = selectedVc.hex;
+  const selectedColor = selectedVehicle ? getColorHex(selectedVehicle.color) : '#60a5fa';
 
   const handleSelect = (idx: number, plate: string) => {
     const next = selectedVehicleIndex === idx ? null : { type: 'vehicle' as const, index: idx };
@@ -153,7 +179,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
     <>
       {/* ── Carte principale : liste des véhicules ── */}
       <Card className="bg-white border-gray-200">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
@@ -173,7 +199,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
 
           {/* Stats globales */}
           <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
-            <h3 className="app-title-subsection uppercase text-center mb-2">{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
+            <h3 className="app-title-subsection mb-2">{solution.label ?? 'Solution optimisée'}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Véhicules utilisés', value: `${usedVehicleCount}/${availableVehicles.length}`, color: 'text-violet-700' },
@@ -228,8 +254,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
 
             {solution.details_vehicules.map((v, idx) => {
               const vehicle = vehicles.find(veh => veh.name === v.nom);
-              const vc = vehicle ? getVehicleColor(vehicle.color) : getVehicleColor('');
-              const color = vc.hex;
+              const color = vehicle ? getColorHex(vehicle.color) : '#60a5fa';
               const barPct = barWidths[idx] ?? 0;
               const targetPct = Math.round((v.temps_min / maxTime) * 100);
               const isSelected = selectedVehicleIndex === idx;
@@ -268,12 +293,12 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
-                      <span className="number_subtitle">
-                        <Clock />
-                        {v.temps_min.toFixed(1)} min
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span className="font-semibold text-gray-800">{v.temps_min.toFixed(1)} min</span>
                       </span>
-                      <span className="number_subtitle">
-                        <MapPin />
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
                         {v.distance_km.toFixed(1)} km
                       </span>
                     </div>
@@ -373,8 +398,8 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
       )}
 
       {sv && (
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white w-full">
-          {/* Bande couleur véhicule */}
+        <Card className="bg-white border-gray-200 overflow-hidden">
+          {/* Bande couleur + en-tête */}
           <div className="h-1.5" style={{ backgroundColor: selectedColor }} />
           <CardHeader className="pb-2 pt-3 relative">
             <div className="flex items-center justify-between pr-8">
@@ -392,150 +417,142 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
             </div>
           </CardHeader>
 
-          <CardContent className="pt-0 pb-4">
+          <CardContent className={`pt-0 space-y-2 bg-gradient-to-b ${palette.bg}`}>
             {sv.arrets && sv.arrets.map((arret, aIdx) => {
               const isDepot = arret.action === 'Departure' || arret.action === 'Return';
               const actionLabel: Record<string, string> = {
                 Departure: 'Départ dépôt', Return: 'Retour dépôt',
                 Delivery: 'Livraison', Recovery: 'Ramassage',
               };
-              const isLast = aIdx === (sv.arrets?.length ?? 0) - 1;
+              const actionColor: Record<string, string> = {
+                Departure: 'bg-gray-200 text-gray-600', Return: 'bg-gray-200 text-gray-600',
+                Delivery: 'bg-blue-100 text-blue-700', Recovery: 'bg-violet-100 text-violet-700',
+              };
 
               return (
-                <div key={aIdx}>
-                  {/* ── Ligne principale : pastille | contenu | heure ── */}
-                  <div className="flex items-start gap-3 px-2 py-3">
-                    {/* Pastille étape */}
+                <div key={aIdx} className={`rounded-xl overflow-hidden border ${isDepot ? 'border-gray-200 bg-white/60' : `${palette.border} bg-white/80`}`}>
+                  <div className="flex items-center gap-2 px-3 py-2">
                     <span
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-xs mt-0.5"
-                      style={{ backgroundColor: isDepot ? '#94a3b8' : selectedVc.hex }}
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-[10px]"
+                      style={{ backgroundColor: isDepot ? '#94a3b8' : palette.accent }}
                     >
-                      {isDepot ? 'D' : arret.step}
+                      {arret.step}
                     </span>
-
-                    {/* Contenu central */}
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      {/* Nom + badge action */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm text-gray-900">{arret.label}</span>
-                        <span
-                          className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                          style={isDepot
-                            ? { backgroundColor: '#e5e7eb', color: '#4b5563' }
-                            : { backgroundColor: selectedVc.light, color: selectedVc.dark }
-                          }
-                        >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="app-title-subsection truncate text-gray-900">{arret.label}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${actionColor[arret.action]}`}>
                           {actionLabel[arret.action]}
                         </span>
                       </div>
+                      {arret.address && <p className="text-[10px] text-gray-400 truncate">{arret.address}</p>}
+                    </div>
+                    {arret.arrival_time != null && (
+                      <span className="text-xs font-bold flex-shrink-0" style={{ color: palette.accentDark }}>
+                        {minToHHMM(arret.arrival_time)}
+                      </span>
+                    )}
+                  </div>
 
-                      {/* Adresse */}
-                      {arret.address && (
-                        <p className="text-xs text-gray-400 leading-tight">{arret.address}</p>
+                  {arret.travel_time_from_prev != null && arret.travel_time_from_prev > 0 && (
+                    <div className="flex items-center gap-2 px-3 pb-1 text-[10px] text-gray-500">
+                      <span>↑ trajet :</span>
+                      <span className="font-medium" style={{ color: palette.accent }}>
+                        {arret.travel_time_from_prev.toFixed(0)} min
+                      </span>
+                      {arret.distance_from_prev != null && (
+                        <span className="text-gray-400">· {arret.distance_from_prev.toFixed(1)} km</span>
                       )}
+                    </div>
+                  )}
 
-                      {/* Trajet + fenêtre (une seule ligne compacte) */}
-                      {(!isDepot && (arret.travel_time_from_prev || arret.time_window_start != null)) && (
-                        <div className="flex items-center gap-3 text-[11px] text-gray-500 flex-wrap">
-                          {arret.travel_time_from_prev != null && arret.travel_time_from_prev > 0 && (
-                            <span>
-                              <span style={{ color: selectedVc.hex }}>&#8599;</span>{' '}
-                              {arret.travel_time_from_prev.toFixed(0)} min
-                              {arret.distance_from_prev != null && <> · {arret.distance_from_prev.toFixed(1)} km</>}
-                            </span>
-                          )}
-                          {arret.time_window_start != null && arret.time_window_end != null && (
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-gray-400" />
-                              Fenêtre : {minToHHMM(arret.time_window_start)} – {minToHHMM(arret.time_window_end)}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                  {arret.time_window_start != null && arret.time_window_end != null && !isDepot && (
+                    <div className="flex items-center gap-1.5 px-3 pb-1 text-[10px] text-gray-500">
+                      <Clock className="w-3 h-3" />
+                      <span>Fenêtre :</span>
+                      <span className="font-medium text-gray-700">
+                        {minToHHMM(arret.time_window_start)} – {minToHHMM(arret.time_window_end)}
+                      </span>
+                    </div>
+                  )}
 
-                      {/* Barres chargement arrivée / départ */}
-                      {!isDepot && arret.load_after != null && (() => {
+                  {!isDepot && arret.load_after != null && (
+                    <div className="px-3 pb-2 space-y-1.5">
+                      {(() => {
                         const cap = sv.capacite_m3;
-                        const loadArrival = arret.load_after;
+                        // load_after from backend = load at ARRIVAL (before operation)
+                        // actual departure load = load_after + volume_delta (volume_delta always negative)
+                        const loadArrival   = arret.load_after;
                         const loadDeparture = arret.load_after + arret.volume_delta;
-                        const ratioArrival = cap > 0 ? Math.min((loadArrival / cap) * 100, 100) : 0;
+                        const ratioArrival  = cap > 0 ? Math.min((loadArrival  / cap) * 100, 100) : 0;
                         const ratioDeparture = cap > 0 ? Math.min((loadDeparture / cap) * 100, 100) : 0;
                         return (
-                          <div className="space-y-1 pt-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400 w-12 flex-shrink-0">Arrivée</span>
-                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <>
+                            {/* Barre arrivée — bleu clair */}
+                            <div>
+                              <div className="flex justify-between text-[10px] mb-0.5">
+                                <span className="font-medium flex items-center gap-1" style={{ color: hexToRgba(selectedColor, 0.8) }}>
+                                  <Package className="w-2.5 h-2.5" /> Arrivée
+                                </span>
+                                <span className="font-bold" style={{ color: hexToRgba(selectedColor, 0.8) }}>{ratioArrival.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
                                   style={{
                                     width: `${ratioArrival}%`,
                                     background: ratioArrival > 80
                                       ? '#ef4444'
-                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.5)}, ${hexToRgba(selectedColor, 0.8)})`,
+                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.45)}, ${hexToRgba(selectedColor, 0.72)})`,
                                   }}
                                 />
                               </div>
-                              <span className="text-[10px] font-bold w-8 text-right" style={{ color: ratioArrival > 80 ? '#ef4444' : selectedColor }}>{ratioArrival.toFixed(0)}%</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400 w-12 flex-shrink-0">Départ</span>
-                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            {/* Barre départ — même couleur, plus foncée */}
+                            <div>
+                              <div className="flex justify-between text-[10px] mb-0.5">
+                                <span className="font-medium flex items-center gap-1" style={{ color: selectedColor }}>
+                                  <Package className="w-2.5 h-2.5" /> Départ
+                                </span>
+                                <span className="font-bold" style={{ color: selectedColor }}>{ratioDeparture.toFixed(0)}%</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
                                   style={{
                                     width: `${ratioDeparture}%`,
                                     background: ratioDeparture > 80
                                       ? '#ef4444'
-                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.7)}, ${selectedColor})`,
+                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.82)}, ${selectedColor})`,
                                   }}
                                 />
                               </div>
-                              <span className="text-[10px] font-bold w-8 text-right" style={{ color: ratioDeparture > 80 ? '#ef4444' : selectedColor }}>{ratioDeparture.toFixed(0)}%</span>
                             </div>
-                          </div>
+                          </>
                         );
                       })()}
+                    </div>
+                  )}
 
-                      {/* Encart concert */}
-                      {arret.concert && (
-                        <div
-                          className="rounded-lg px-3 py-2 mt-1 text-[11px] space-y-0.5"
-                          style={{ backgroundColor: selectedVc.light, borderLeft: `3px solid ${selectedVc.hex}` }}
-                        >
-                          <div className="font-semibold" style={{ color: selectedVc.dark }}>
-                            Concert — <span className="font-bold">{minToHHMM(arret.concert.concert_start)}</span>
-                            {arret.concert.concert_duration > 0 && (
-                              <span className="font-normal text-gray-500"> · {arret.concert.concert_duration} min</span>
-                            )}
-                            {arret.concert.setup_duration > 0 && (
-                              <span className="font-normal text-gray-500"> · Installation : {arret.concert.setup_duration} min</span>
-                            )}
-                            {arret.concert.teardown_duration > 0 && (
-                              <span className="font-normal text-gray-500"> · Démontage : {arret.concert.teardown_duration} min</span>
-                            )}
-                          </div>
-                          {arret.concert.instruments.length > 0 && (
-                            <div className="text-gray-600">
-                              {arret.concert.instruments.length} instrument{arret.concert.instruments.length > 1 ? 's' : ''} :{' '}
-                              {Object.entries(arret.concert.instrument_counts).map(([k, n]) => `${n}× ${k}`).join(', ')}
-                            </div>
-                          )}
+                  {arret.concert && (
+                    <div className="mx-3 mb-2 rounded-lg p-2 text-[10px] space-y-0.5"
+                         style={{ backgroundColor: `${palette.accent}14`, border: `1px solid ${palette.accent}30` }}>
+                      <div className="font-semibold flex items-center gap-1" style={{ color: palette.accentDark }}>
+                        🎵 Concert — {minToHHMM(arret.concert.concert_start)}
+                        {arret.concert.concert_duration > 0 && (
+                          <span className="font-normal text-gray-500">({arret.concert.concert_duration} min)</span>
+                        )}
+                      </div>
+                      <div className="flex gap-3 text-gray-600">
+                        {arret.concert.setup_duration > 0 && <span>Installation : {arret.concert.setup_duration} min</span>}
+                        {arret.concert.teardown_duration > 0 && <span>Démontage : {arret.concert.teardown_duration} min</span>}
+                      </div>
+                      {arret.concert.instruments.length > 0 && (
+                        <div className="text-gray-600">
+                          🎸 {arret.concert.instruments.length} instrument{arret.concert.instruments.length > 1 ? 's' : ''} :&nbsp;
+                          {Object.entries(arret.concert.instrument_counts).map(([k, n]) => `${n}× ${k}`).join(', ')}
                         </div>
                       )}
-                    </div>
-
-                    {/* Heure d'arrivée — alignée à droite */}
-                    {arret.arrival_time != null && (
-                      <span className="text-sm font-bold flex-shrink-0 tabular-nums" style={{ color: selectedVc.dark }}>
-                        {minToHHMM(arret.arrival_time)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Séparateur entre arrêts */}
-                  {!isLast && (
-                    <div className="flex justify-center py-0.5 text-gray-300">
-                      <span className="text-sm">&#8595;</span>
                     </div>
                   )}
                 </div>
@@ -543,18 +560,16 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
             })}
 
             {/* Total */}
-            <div
-              className="flex justify-between items-center rounded-lg px-3 py-2 mt-3 text-xs font-semibold border"
-              style={{ borderColor: hexToRgba(selectedVc.hex, 0.3), backgroundColor: hexToRgba(selectedVc.hex, 0.09) }}
-            >
-              <span style={{ color: selectedVc.dark }}>Total trajet</span>
+            <div className={`flex justify-between items-center rounded-lg px-3 py-1.5 text-xs font-semibold border ${palette.border}`}
+                 style={{ backgroundColor: `${palette.accent}18` }}>
+              <span style={{ color: palette.accentDark }}>Total trajet</span>
               <div className="flex gap-3">
-                <span style={{ color: selectedVc.hex }}>{sv.temps_min.toFixed(0)} min</span>
-                <span style={{ color: selectedVc.dark }}>{sv.distance_km.toFixed(1)} km</span>
+                <span style={{ color: palette.accent }}>{sv.temps_min.toFixed(0)} min</span>
+                <span style={{ color: palette.accentDark }}>{sv.distance_km.toFixed(1)} km</span>
               </div>
             </div>
           </CardContent>
-        </div>
+        </Card>
       )}
     </>
   );

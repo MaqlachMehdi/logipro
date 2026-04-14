@@ -6,7 +6,7 @@ export function Card({ children, className = '' }: { children: React.ReactNode; 
       rounded-xl overflow-hidden border border-gray-200 bg-white w-full
       ${className}
     `}>
-      <div className="h-2" style={{ backgroundColor: 'var(--color-B)' }} />
+      <div className="h-2" style={{ backgroundColor: 'var(--color-R)' }} />
       {children}
     </div>
   );
