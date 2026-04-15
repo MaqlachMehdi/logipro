@@ -154,7 +154,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
       {/* ── Carte principale : liste des véhicules ── */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="pb-4">
-          <div className="flex items-start justify-between w-full" style={{ paddingRight: '1em' }}>
+          <div className="flex items-center justify-between" style={{ paddingRight: '1em' }}>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
               Résultat d'optimisation
@@ -172,7 +172,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <CardContent className="space-y-3 pt-0">
 
           {/* Stats globales */}
-          <div className="rounded-2xl p-3">
+          <div className="rounded-2xl border border-gray-200 p-3">
             <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.5em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[

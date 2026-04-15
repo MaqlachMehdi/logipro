@@ -154,7 +154,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
       {/* ── Carte principale : liste des véhicules ── */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="pb-4">
-          <div className="flex items-start justify-between w-full" style={{ paddingRight: '1em' }}>
+          <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
               Résultat d'optimisation
@@ -172,8 +172,8 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <CardContent className="space-y-3 pt-0">
 
           {/* Stats globales */}
-          <div className="rounded-2xl p-3">
-            <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.5em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
+            <h3 className="app-title-subsection uppercase text-center mb-2">{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Véhicules utilisés', value: `${usedVehicleCount}/${availableVehicles.length}`, color: 'text-violet-700' },
@@ -181,7 +181,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 { label: 'Trajet total', value: `${solution.temps_total_min?.toFixed(0) ?? 0} min`, color: 'text-gray-900' },
                 { label: 'Distance', value: `${solution.distance_totale_km?.toFixed(1) ?? 0} km`, color: 'text-gray-700' },
               ].map((stat, i) => (
-                <div key={i} className="rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+                <div key={i} className="rounded-xl border border-gray-200 bg-white p-3 text-center shadow-sm">
                   <div className={`text-sm font-bold ${stat.color}`}>{stat.value}</div>
                   <div className="app-title-subsection text-gray-500">{stat.label}</div>
                 </div>
@@ -469,11 +469,13 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                                   className="h-full rounded-full transition-all"
                                   style={{
                                     width: `${ratioArrival}%`,
-                                    background: `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.35)}, ${hexToRgba(selectedColor, 0.6)})`,
+                                    background: ratioArrival > 80
+                                      ? '#ef4444'
+                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.5)}, ${hexToRgba(selectedColor, 0.8)})`,
                                   }}
                                 />
                               </div>
-                              <span className="text-[10px] font-bold w-8 text-right" style={{ color: hexToRgba(selectedColor, 0.7) }}>{ratioArrival.toFixed(0)}%</span>
+                              <span className="text-[10px] font-bold w-8 text-right" style={{ color: ratioArrival > 80 ? '#ef4444' : selectedColor }}>{ratioArrival.toFixed(0)}%</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] text-gray-400 w-12 flex-shrink-0">Départ</span>
@@ -482,11 +484,13 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                                   className="h-full rounded-full transition-all"
                                   style={{
                                     width: `${ratioDeparture}%`,
-                                    background: `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.55)}, ${hexToRgba(selectedColor, 0.85)})`,
+                                    background: ratioDeparture > 80
+                                      ? '#ef4444'
+                                      : `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.7)}, ${selectedColor})`,
                                   }}
                                 />
                               </div>
-                              <span className="text-[10px] font-bold w-8 text-right" style={{ color: selectedColor }}>{ratioDeparture.toFixed(0)}%</span>
+                              <span className="text-[10px] font-bold w-8 text-right" style={{ color: ratioDeparture > 80 ? '#ef4444' : selectedColor }}>{ratioDeparture.toFixed(0)}%</span>
                             </div>
                           </div>
                         );
@@ -548,10 +552,8 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
               className="flex justify-between items-center rounded-lg mt-3 text-xs font-semibold border"
               style={{
                 borderColor: hexToRgba(selectedVc.hex, 0.3),
-                backgroundColor: hexToRgba(selectedVc.hex, 0.1),
+                backgroundColor: hexToRgba(selectedVc.hex, 0.01),
                 padding: '0.5em',
-                paddingLeft: '1em',
-                paddingRight: '1em',
                 marginLeft: '0.8em',
               }}
             >

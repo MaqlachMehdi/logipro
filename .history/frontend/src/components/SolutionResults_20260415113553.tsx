@@ -154,7 +154,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
       {/* ── Carte principale : liste des véhicules ── */}
       <Card className="bg-white border-gray-200">
         <CardHeader className="pb-4">
-          <div className="flex items-start justify-between w-full" style={{ paddingRight: '1em' }}>
+          <div className="flex items-center justify-between w-full" style={{ paddingRight: '1em' }}>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
               Résultat d'optimisation
