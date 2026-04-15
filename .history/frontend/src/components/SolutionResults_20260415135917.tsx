@@ -89,15 +89,6 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
   const [selectedPanel, setSelectedPanel] = useState<SelectedPanel>(null);
   const [barWidths, setBarWidths] = useState<Record<number, number>>({});
   const [animReady, setAnimReady] = useState(false);
-  const [detailAnimReady, setDetailAnimReady] = useState(false);
-
-  useEffect(() => {
-    setDetailAnimReady(false);
-    if (selectedPanel?.type === 'vehicle') {
-      const t = setTimeout(() => setDetailAnimReady(true), 80);
-      return () => clearTimeout(t);
-    }
-  }, [selectedPanel]);
 
   useEffect(() => {
     setSelectedPanel(null);
@@ -185,7 +176,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
 
           {/* Stats globales */}
           <div className="rounded-2xl p-3">
-            <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.3em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
+            <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.5em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Véhicules utilisés', value: `${usedVehicleCount}/${availableVehicles.length}`, color: 'text-violet-700' },
@@ -333,9 +324,9 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
 
       {/* ── Panneau détail : affiché en dessous de la carte quand un véhicule est sélectionné ── */}
       {showConcertsPanel && (
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white w-full">
+        <Card className="bg-white border-gray-200 overflow-hidden">
           <div className="h-1.5 bg-violet-600" />
-          <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+          <CardHeader className="pb-2 pt-3">
             <div className="flex items-center justify-between gap-3 w-full">
               <CardTitle className="flex items-center gap-2">
                 <CalendarClock className="w-4 h-4 text-violet-700" />
@@ -350,9 +341,9 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 <X className="w-4 h-4" />
               </button>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="p-4 flex flex-col flex-grow pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
+          <CardContent className="pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
             {concerts.map((concert, index) => (
               <div key={concert.id} className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
                 <div className="flex items-center gap-4">
@@ -367,7 +358,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                       <span className="app-title-subsection text-violet-700">[{index + 1}] {concert.name}</span>
                     </div>
                     <div className="app-text-meta mt-2">
-                      Durée : {concert.concertDuration}min &nbsp;|&nbsp; Installation : {concert.setupDuration}min &nbsp;|&nbsp; Désinstallation : {concert.teardownDuration}min
+                      Duration: {concert.concertDuration}min &nbsp;|&nbsp; Setup: {concert.setupDuration}min &nbsp;|&nbsp; Teardown: {concert.teardownDuration}min
                     </div>
                     {concert.instrumentsLabel ? (
                       <div className="mt-3 text-sm font-semibold leading-6 text-violet-600 break-words">
@@ -380,8 +371,8 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {sv && (
@@ -478,11 +469,10 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                               <span className="text-[10px] text-gray-400 w-12 flex-shrink-0">Arrivée</span>
                               <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full rounded-full"
+                                  className="h-full rounded-full transition-all"
                                   style={{
-                                    width: `${detailAnimReady ? ratioArrival : 0}%`,
+                                    width: `${ratioArrival}%`,
                                     background: `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.35)}, ${hexToRgba(selectedColor, 0.6)})`,
-                                    transition: 'width 2s cubic-bezier(0.16, 1, 0.3, 1)',
                                   }}
                                 />
                               </div>
@@ -492,11 +482,10 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                               <span className="text-[10px] text-gray-400 w-12 flex-shrink-0">Départ</span>
                               <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                  className="h-full rounded-full"
+                                  className="h-full rounded-full transition-all"
                                   style={{
-                                    width: `${detailAnimReady ? ratioDeparture : 0}%`,
+                                    width: `${ratioDeparture}%`,
                                     background: `linear-gradient(90deg, ${hexToRgba(selectedColor, 0.55)}, ${hexToRgba(selectedColor, 0.85)})`,
-                                    transition: 'width 2.4s cubic-bezier(0.16, 1, 0.3, 1)',
                                   }}
                                 />
                               </div>

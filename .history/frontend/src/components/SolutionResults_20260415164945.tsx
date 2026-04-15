@@ -185,7 +185,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
 
           {/* Stats globales */}
           <div className="rounded-2xl p-3">
-            <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.3em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
+            <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.5em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Véhicules utilisés', value: `${usedVehicleCount}/${availableVehicles.length}`, color: 'text-violet-700' },
@@ -333,9 +333,9 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
 
       {/* ── Panneau détail : affiché en dessous de la carte quand un véhicule est sélectionné ── */}
       {showConcertsPanel && (
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white w-full">
+        <Card className="bg-white border-gray-200 overflow-hidden">
           <div className="h-1.5 bg-violet-600" />
-          <div className="px-4 pt-5 pb-3 flex items-center justify-between">
+          <CardHeader className="pb-2 pt-3">
             <div className="flex items-center justify-between gap-3 w-full">
               <CardTitle className="flex items-center gap-2">
                 <CalendarClock className="w-4 h-4 text-violet-700" />
@@ -350,9 +350,9 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 <X className="w-4 h-4" />
               </button>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="p-4 flex flex-col flex-grow pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
+          <CardContent className="pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
             {concerts.map((concert, index) => (
               <div key={concert.id} className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
                 <div className="flex items-center gap-4">
@@ -380,8 +380,8 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {sv && (

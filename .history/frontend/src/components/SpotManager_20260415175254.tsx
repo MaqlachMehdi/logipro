@@ -402,7 +402,7 @@ export function SpotManager({
               variant="ghost"
               size="sm"
               className="bouton_add w-full text-gray-900"
-              style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
+              style={{ borderStyle: 'dashed', borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.borderWidth = '1px'; }}
               onClick={() => { setIsAdding(true); setGeocodeError(null); }}

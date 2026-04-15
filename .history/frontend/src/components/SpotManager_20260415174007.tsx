@@ -374,9 +374,8 @@ export function SpotManager({
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
-                variant="ghost"
                 className="bouton_add flex-1 bg-white text-gray-900"
-                style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
+                style={{ borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.borderWidth = '1px'; }}
                 onClick={handleAdd}
@@ -385,11 +384,11 @@ export function SpotManager({
               </Button>
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 className="bouton_add text-gray-900"
-                style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: 'transparent', transition: 'border-color 150ms, border-width 150ms' }}
+                style={{ borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.borderWidth = '1px'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.borderWidth = '1px'; }}
                 onClick={() => setIsAdding(false)}
               >
                 Annuler
@@ -399,10 +398,10 @@ export function SpotManager({
         ) : (
           <div style={{padding : "0.2em" }}>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="bouton_add w-full text-gray-900"
-              style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
+              className="bouton_add w-full border-dashed text-gray-900"
+              style={{ borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.borderWidth = '1px'; }}
               onClick={() => { setIsAdding(true); setGeocodeError(null); }}

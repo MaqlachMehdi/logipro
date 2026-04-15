@@ -290,9 +290,9 @@ export function SpotManager({
         </div>
 
         {isAdding ? (
-          <div className="bg-gray-50 rounded-lg border border-gray-200 space-y-3" style={{ padding: '0.8em' }}>
-            <div style={{ paddingBottom: '0.4em' }}>
-              <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Nom du lieu</Label>
+          <div className="bg-gray-50 rounded-lg border border-gray-200 space-y-3" style={{ padding: '1em' }}>
+            <div>
+              <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Nom du lieu</Label>
               <Input
                 value={newSpot.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSpot({ ...newSpot, name: e.target.value })}
@@ -300,8 +300,8 @@ export function SpotManager({
                 className="bg-white border-gray-300 text-gray-900"
               />
             </div>
-            <div style={{ paddingBottom: '0.4em' }}>
-              <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Adresse</Label>
+            <div>
+              <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Adresse</Label>
               <Input
                 value={newSpot.address}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSpot({ ...newSpot, address: e.target.value })}
@@ -310,8 +310,8 @@ export function SpotManager({
               />
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div style={{ paddingBottom: '0.4em' }}>
-                <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Ouverture</Label>
+              <div>
+                <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Ouverture</Label>
                 <Input
                   type="time"
                   value={newSpot.openingTime}
@@ -319,8 +319,8 @@ export function SpotManager({
                   className="bg-white border-gray-300 text-gray-900"
                 />
               </div>
-              <div style={{ paddingBottom: '0.4em' }}>
-                <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Concert</Label>
+              <div>
+                <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Concert</Label>
                 <Input
                   type="time"
                   value={newSpot.concertTime}
@@ -328,8 +328,8 @@ export function SpotManager({
                   className="bg-white border-gray-300 text-gray-900"
                 />
               </div>
-              <div style={{ paddingBottom: '0.4em' }}>
-                <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Durée (min)</Label>
+              <div>
+                <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Durée (min)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -338,8 +338,8 @@ export function SpotManager({
                   className="bg-white border-gray-300 text-gray-900"
                 />
               </div>
-              <div style={{ paddingBottom: '0.4em' }}>
-                <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Fermeture</Label>
+              <div>
+                <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Fermeture</Label>
                 <Input
                   type="time"
                   value={newSpot.closingTime}
@@ -347,8 +347,8 @@ export function SpotManager({
                   className="bg-white border-gray-300 text-gray-900"
                 />
               </div>
-              <div style={{ paddingBottom: '0.4em' }}>
-                <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Installation (min)</Label>
+              <div>
+                <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Installation (min)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -357,8 +357,8 @@ export function SpotManager({
                   className="bg-white border-gray-300 text-gray-900"
                 />
               </div>
-              <div style={{ paddingBottom: '0.4em' }}>
-                <Label style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Désinstallation (min)</Label>
+              <div>
+                <Label className="text-gray-900 text-xs font-bold" style={{ display: 'block', paddingBottom: '0.5em' }}>Désinstallation (min)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -374,22 +374,15 @@ export function SpotManager({
             <div className="flex gap-2 pt-2">
               <Button
                 size="sm"
-                variant="ghost"
-                className="bouton_add flex-1 bg-white text-gray-900"
-                style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.borderWidth = '1px'; }}
+                className="bouton_add flex-1 bg-white hover:bg-gray-100 text-gray-900"
                 onClick={handleAdd}
               >
                 Ajouter
               </Button>
               <Button
                 size="sm"
-                variant="ghost"
-                className="bouton_add text-gray-900"
-                style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: 'transparent', transition: 'border-color 150ms, border-width 150ms' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.borderWidth = '1px'; }}
+                variant="outline"
+                className="bouton_add border-gray-300 text-gray-900 hover:bg-gray-100"
                 onClick={() => setIsAdding(false)}
               >
                 Annuler
@@ -397,20 +390,15 @@ export function SpotManager({
             </div>
           </div>
         ) : (
-          <div style={{padding : "0.2em" }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="bouton_add w-full text-gray-900"
-              style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.borderWidth = '1px'; }}
-              onClick={() => { setIsAdding(true); setGeocodeError(null); }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter un lieu
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="bouton_add w-full border-dashed border-gray-300 text-gray-900 hover:text-gray-900 hover:border-blue-400 hover:bg-blue-50"
+            onClick={() => { setIsAdding(true); setGeocodeError(null); }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter un lieu
+          </Button>
         )}
       </CardContent>
     </Card>

@@ -144,10 +144,6 @@ export default function App() {
   const [filterPlate, setFilterPlate] = useState<string | null>(null);
   const [solution, setSolution] = useState<VRPSolution | null>(null);
 
-  useEffect(() => {
-    window.resizeTo(1280, 800);
-  }, []);
-
   const persistSpots = async (spotsWithDepot: Spot[]) => {
     try {
       const persisted = await syncSpots(withDepot(spotsWithDepot));
