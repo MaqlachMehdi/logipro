@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { GearItem, Spot, Vehicle } from '../types';
 import type { VRPSolution } from '../utils/vrp-solver';
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
-import { CalendarClock, Clock, MapPin, Navigation, TrendingUp, X, Printer } from 'lucide-react';
+import { CalendarClock, Clock, MapPin, Navigation, TrendingUp, X, Printer, ArrowUp, ArrowDown } from 'lucide-react';
 import { getVehicleColor, hexToRgba, type VehicleColor } from '../config/vehicle-colors';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -346,46 +346,94 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
               <CardTitle className="flex items-center gap-2">
                 <CalendarClock className="w-4 h-4 text-violet-700" />
                 <span className="text-violet-700">Concerts</span>
-                <span className="text-gray-400 font-normal text-xs">— Synthese des livraisons par date</span>
+                <span className="text-gray-400 font-normal text-xs">&mdash; Synth&egrave;se des livraisons</span>
               </CardTitle>
-              <button
-                onClick={() => setSelectedPanel(null)}
-                className="shrink-0 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Fermer la synthese des concerts"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-400">Aujourd&apos;hui</span>
+                <button
+                  onClick={() => setSelectedPanel(null)}
+                  className="shrink-0 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="p-4 flex flex-col flex-grow pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
-            {concerts.map((concert, index) => (
-              <div key={concert.id} className="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="w-36 shrink-0 self-center text-center text-sm font-bold text-violet-700">
-                    {concert.concertTime}
-                    {concert.concertDuration > 0 && (
-                      <span className="text-violet-500 font-semibold block mt-0.5">{addMinutesToTime(concert.concertTime, concert.concertDuration)}</span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="app-title-subsection text-violet-700">[{index + 1}] {concert.name}</span>
+          <div className="pb-4 pt-0 space-y-3" style={{ paddingLeft: '1rem', paddingRight: '1rem' }}>
+            {concerts.map((concert, index) => {
+              // Couleur cyclique via les variables CSS du design system
+              const colorKeys = ['V', 'B', 'M', 'R', 'O'];
+              const colorKey = colorKeys[index % colorKeys.length];
+              const accentColor = `var(--color-${colorKey})`;
+              const accentDark = `var(--color-${colorKey}-dark)`;
+              const concertEnd = addMinutesToTime(concert.concertTime, concert.concertDuration);
+              const instruments = concert.instrumentsLabel
+                ? concert.instrumentsLabel.split('  |  ').filter(Boolean)
+                : [];
+              return (
+                <div key={concert.id} className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex">
+                  {/* Barre colorée gauche */}
+                  <div style={{ width: '4px', flexShrink: 0, backgroundColor: accentColor }} />
+
+                  <div className="flex gap-3 py-3 px-3 flex-1 min-w-0">
+                    {/* Colonne heure */}
+                    <div className="flex flex-col items-center shrink-0" style={{ width: '2.8rem' }}>
+                      <span className="text-sm font-bold" style={{ color: accentDark }}>{concert.concertTime}</span>
+                      <div className="w-1.5 h-1.5 rounded-full my-1" style={{ backgroundColor: accentColor }} />
+                      <span className="text-xs font-semibold" style={{ color: accentColor }}>{concertEnd}</span>
                     </div>
-                    <div className="app-text-meta mt-2">
-                      Durée : {concert.concertDuration}min &nbsp;|&nbsp; Installation : {concert.setupDuration}min &nbsp;|&nbsp; Désinstallation : {concert.teardownDuration}min
-                    </div>
-                    {concert.instrumentsLabel ? (
-                      <div className="mt-3 text-sm font-semibold leading-6 text-violet-600 break-words">
-                        {concert.instrumentsLabel}
+
+                    {/* Contenu principal */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ backgroundColor: `var(--color-${colorKey}-light)`, color: accentDark }}
+                        >
+                          {index + 1}
+                        </span>
+                        <span className="app-title-subsection" style={{ color: accentDark, transform: 'none' }}>{concert.name}</span>
                       </div>
-                    ) : (
-                      <div className="mt-3 text-sm text-gray-400 italic">Aucun instrument selectionne</div>
-                    )}
+
+                      {/* Icônes durées */}
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="number_subtitle flex items-center gap-1">
+                          <Clock style={{ width: '0.85em', height: '0.85em' }} />
+                          {concert.concertDuration} min
+                        </span>
+                        <span className="number_subtitle flex items-center gap-1">
+                          <ArrowUp style={{ width: '0.85em', height: '0.85em' }} />
+                          {concert.setupDuration} min
+                        </span>
+                        <span className="number_subtitle flex items-center gap-1">
+                          <ArrowDown style={{ width: '0.85em', height: '0.85em' }} />
+                          {concert.teardownDuration} min
+                        </span>
+                      </div>
+
+                      {/* Bulles instruments */}
+                      {instruments.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {instruments.map((inst, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: `var(--color-${colorKey}-light)`, color: accentDark }}
+                            >
+                              {inst}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Aucun instrument s&eacute;lectionn&eacute;</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -184,7 +184,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <CardContent className="space-y-3 pt-0">
 
           {/* Stats globales */}
-          <div className="rounded-2xl p-3" style={{ paddingBottom: '0.5em' }}>
+          <div className="rounded-2xl p-3">
             <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.3em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[

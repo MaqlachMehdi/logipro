@@ -140,7 +140,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
             <Package className="w-4 h-4 text-blue-600" />
             Matériel : {spotName}
           </span>
-          <div className="flex items-center gap-2" style={{ background: 'white' }}>
+          <div className="flex items-center gap-2 background: white">
             {selections.length > 0 && (
               <Button
                 variant="ghost"

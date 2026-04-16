@@ -135,12 +135,12 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
   return (
     <Card className="bg-white border-gray-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-white-900 text-sm flex items-center justify-between">
+        <CardTitle className="text-gray-900 text-sm flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Package className="w-4 h-4 text-blue-600" />
             Matériel : {spotName}
           </span>
-          <div className="flex items-center gap-2" style={{ background: 'white' }}>
+          <div className="flex items-center gap-2">
             {selections.length > 0 && (
               <Button
                 variant="ghost"

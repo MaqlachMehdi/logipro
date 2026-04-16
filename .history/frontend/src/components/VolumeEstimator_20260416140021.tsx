@@ -135,23 +135,21 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
   return (
     <Card className="bg-white border-gray-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-white-900 text-sm flex items-center justify-between">
+        <CardTitle className="text-gray-900 text-sm flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Package className="w-4 h-4 text-blue-600" />
             Matériel : {spotName}
           </span>
-          <div className="flex items-center gap-2" style={{ background: 'white' }}>
+          <div className="flex items-center gap-2">
             {selections.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="app-title-subsection px-2"
-                style={{ color: 'var(--color-red-supprime)', transform: 'none' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-red-supprime)'; e.currentTarget.style.borderWidth = '1px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.borderWidth = '1px'; }}
+                className="app-title-subsection px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                style={{ color: undefined, transform: 'none' }}
                 onClick={() => onChange([])}
               >
-                <Trash2 style={{ width: '1.15rem', height: '1.15rem', marginRight: '0.25rem', flexShrink: 0, color: 'var(--color-red-supprime)' }} />
+                <Trash2 style={{ width: '1.15rem', height: '1.15rem', marginRight: '0.25rem', flexShrink: 0 }} />
                 Tout supprimer
               </Button>
             )}

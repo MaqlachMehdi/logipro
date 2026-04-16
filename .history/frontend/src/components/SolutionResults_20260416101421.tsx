@@ -184,7 +184,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <CardContent className="space-y-3 pt-0">
 
           {/* Stats globales */}
-          <div className="rounded-2xl p-3" style={{ paddingBottom: '0.5em' }}>
+          <div className="rounded-2xl p-3">
             <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.3em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -221,7 +221,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <CalendarClock className="text-violet-700 flex-shrink-0" style={{ width: '1.3em', height: '1.3em' }} />
+                      <span style={{ fontSize: '1.3em', lineHeight: 1 }}>🗓️</span>
                       <span className="app-title-subsection uppercase tracking-[0.18em]">Concerts</span>
                     </div>
                     <p className="app-text-meta mt-1" style={{ paddingLeft: '0.5em' }}>

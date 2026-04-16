@@ -184,7 +184,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <CardContent className="space-y-3 pt-0">
 
           {/* Stats globales */}
-          <div className="rounded-2xl p-3" style={{ paddingBottom: '0.5em' }}>
+          <div className="rounded-2xl p-3">
             <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.3em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -212,7 +212,6 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 scrollSnapAlign: 'start',
                 borderColor: showConcertsPanel ? '#7c3aed' : '#e5e7eb',
                 boxShadow: showConcertsPanel ? '0 0 0 1px rgba(124,58,237,0.22), 0 8px 24px rgba(124,58,237,0.12)' : undefined,
-                backgroundColor: showConcertsPanel ? '#f5f3ff' : '#f9fafb',
               }}
               onClick={handleConcertsSelect}
             >
@@ -221,7 +220,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <CalendarClock className="text-violet-700 flex-shrink-0" style={{ width: '1.3em', height: '1.3em' }} />
+                      <CalendarClock className="text-violet-700" style={{ width: '1em', height: '1em' }} />
                       <span className="app-title-subsection uppercase tracking-[0.18em]">Concerts</span>
                     </div>
                     <p className="app-text-meta mt-1" style={{ paddingLeft: '0.5em' }}>

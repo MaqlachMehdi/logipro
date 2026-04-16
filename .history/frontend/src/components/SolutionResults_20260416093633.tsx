@@ -184,7 +184,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
         <CardContent className="space-y-3 pt-0">
 
           {/* Stats globales */}
-          <div className="rounded-2xl p-3" style={{ paddingBottom: '0.5em' }}>
+          <div className="rounded-2xl p-3">
             <h3 className="app-title-subsection uppercase text-center" style={{ paddingTop: '0.5em', paddingBottom: '0.3em' }}>{(solution.label ?? 'Solution optimisée').toUpperCase()}</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -201,47 +201,42 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
             </div>
           </div>
 
-          {/* Cartes concerts + véhicules – défilement horizontal */}
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}>
-
-            {/* Card Concerts */}
-            <div
-              className="rounded-xl overflow-hidden border-2 cursor-pointer transition-all flex-shrink-0"
+          {/* Carte concerts + cartes véhicules */}
+          <div
+            className="rounded-xl overflow-hidden border-2 cursor-pointer transition-all"
               style={{
-                width: 'calc(0.80 * (50% - 4px))',
-                scrollSnapAlign: 'start',
                 borderColor: showConcertsPanel ? '#7c3aed' : '#e5e7eb',
                 boxShadow: showConcertsPanel ? '0 0 0 1px rgba(124,58,237,0.22), 0 8px 24px rgba(124,58,237,0.12)' : undefined,
-                backgroundColor: showConcertsPanel ? '#f5f3ff' : '#f9fafb',
               }}
               onClick={handleConcertsSelect}
             >
               <div className="h-1 bg-violet-600" />
-              <div className={`p-3 transition-colors ${showConcertsPanel ? 'bg-violet-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
-                <div className="flex items-start justify-between gap-2">
+              <div className={`p-4 transition-colors ${showConcertsPanel ? 'bg-violet-50' : 'bg-gray-50 hover:bg-gray-100'}`}>
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <CalendarClock className="text-violet-700 flex-shrink-0" style={{ width: '1.3em', height: '1.3em' }} />
+                      <CalendarClock className="w-4 h-4 text-violet-700" />
                       <span className="app-title-subsection uppercase tracking-[0.18em]">Concerts</span>
                     </div>
-                    <p className="app-text-meta mt-1" style={{ paddingLeft: '0.5em' }}>
+                    <p className="app-text-meta mt-1">
                       Vue par concert avec horaires, durees et instruments a livrer.
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-1" style={{ paddingTop: '0.5em', paddingRight: '0.5em' }}>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${showConcertsPanel ? 'bg-violet-100 text-violet-700' : 'bg-white text-gray-500 border border-gray-200'}`}>
-                      {showConcertsPanel ? 'Ouvert' : 'Ouvrir'}
-                    </span>
-                    <span className="text-[10px] font-semibold text-violet-700">
-                      {concerts.length} concert{concerts.length > 1 ? 's' : ''}
-                    </span>
-                    <span className="text-[10px] text-gray-500">
-                      {concerts.reduce((sum, concert) => sum + (concert.instrumentsLabel ? concert.instrumentsLabel.split('  |  ').length : 0), 0)} lignes instrument
-                    </span>
-                  </div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${showConcertsPanel ? 'bg-violet-100 text-violet-700' : 'bg-white text-gray-500 border border-gray-200'}`}>
+                    {showConcertsPanel ? 'Ouvert' : 'Ouvrir'}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full bg-white px-2.5 py-1 text-violet-700 border border-violet-200 font-semibold">
+                    {concerts.length} concert{concerts.length > 1 ? 's' : ''}
+                  </span>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-gray-600 border border-gray-200">
+                    {concerts.reduce((sum, concert) => sum + (concert.instrumentsLabel ? concert.instrumentsLabel.split('  |  ').length : 0), 0)} lignes instrument
+                  </span>
                 </div>
               </div>
             </div>
+
             {solution.details_vehicules.map((v, idx) => {
               const vehicle = vehicles.find(veh => veh.name === v.nom);
               const vc = vehicle ? getVehicleColor(vehicle.color) : getVehicleColor('');
@@ -254,10 +249,8 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
               return (
                 <div
                   key={idx}
-                  className="rounded-xl overflow-hidden border-2 cursor-pointer transition-all flex-shrink-0"
+                  className="rounded-xl overflow-hidden border-2 cursor-pointer transition-all"
                   style={{
-                    width: 'calc(50% - 4px)',
-                    scrollSnapAlign: 'start',
                     borderColor: isSelected ? color : '#f3f4f6',
                     boxShadow: isSelected ? `0 0 0 1px ${color}40, 0 2px 8px ${color}20` : undefined,
                   }}

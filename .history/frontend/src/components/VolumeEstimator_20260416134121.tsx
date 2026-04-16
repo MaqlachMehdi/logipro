@@ -135,23 +135,20 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
   return (
     <Card className="bg-white border-gray-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-white-900 text-sm flex items-center justify-between">
+        <CardTitle className="text-gray-900 text-sm flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Package className="w-4 h-4 text-blue-600" />
             Matériel : {spotName}
           </span>
-          <div className="flex items-center gap-2" style={{ background: 'white' }}>
+          <div className="flex items-center gap-2">
             {selections.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="app-title-subsection px-2"
-                style={{ color: 'var(--color-red-supprime)', transform: 'none' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-red-supprime)'; e.currentTarget.style.borderWidth = '1px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.borderWidth = '1px'; }}
+                className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                 onClick={() => onChange([])}
               >
-                <Trash2 style={{ width: '1.15rem', height: '1.15rem', marginRight: '0.25rem', flexShrink: 0, color: 'var(--color-red-supprime)' }} />
+                <Trash2 className="w-3 h-3 mr-1" />
                 Tout supprimer
               </Button>
             )}
@@ -159,7 +156,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 overflow-y-auto pr-2 max-h-[40vh]">
+      <CardContent className="space-y-2 overflow-y-auto pr-2" style={{ maxHeight: '40vh' }}>
         {categories.map((category: string) => (
           <div key={category} className="border border-gray-200 rounded-lg overflow-visible bg-gray-50">
             <div className="w-full px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors cursor-pointer">
@@ -219,12 +216,12 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                           >
                             -
                           </Button>
-                          <input
+                          <Input
                             type="number"
                             min="0"
                             value={quantity}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateQuantity(gear.id, parseInt(e.target.value) || 0)}
-                            style={{ width: '3rem', height: '1.75rem', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#111827', background: 'white', minWidth: '0', padding: '0' }}
+                            className="h-7 w-14 text-center bg-white border-gray-300 text-gray-900 text-sm"
                           />
                           <Button
                             variant="ghost"
@@ -329,7 +326,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
               onClick={() => { setIsAddMenuOpen(true); setAddError(''); }}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Ajouter un instrument
+              + ajouter un instrument
             </Button>
           </div>
         )}

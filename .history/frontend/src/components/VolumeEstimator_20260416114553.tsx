@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { GearSelection } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
 import { Button } from './ui/button';
@@ -84,7 +84,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
       .concat(customCategories)
   )] as string[];
 
-  // Suggestions = uniquement les Catégories existantes (plus aucune Catégorie supprimée)
+  // Suggestions = uniquement les catégories existantes (plus aucune catégorie supprimée)
   const categorySuggestions = categories;
 
   const handleAddGear = async () => {
@@ -93,12 +93,12 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
     const volume = parseFloat(newGearVolume);
 
     if (!name) {
-      setAddError("Le nom de l'instrument est requis.");
+      setAddError('Le nom de l’instrument est requis.');
       return;
     }
 
     if (!category) {
-      setAddError('La Catégorie est requise.');
+      setAddError('La catégorie est requise.');
       return;
     }
 
@@ -112,7 +112,7 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
     );
 
     if (duplicateExists) {
-      setAddError('Cet instrument existe déjà  dans cette Catégorie.');
+      setAddError('Cet instrument existe déjà dans cette catégorie.');
       return;
     }
 
@@ -128,38 +128,117 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
       setAddError('');
       setIsAddMenuOpen(false);
     } catch {
-      setAddError("Impossible d'ajouter l'instrument pour le moment.");
+      setAddError('Impossible d’ajouter l’instrument pour le moment.');
     }
   };
 
   return (
     <Card className="bg-white border-gray-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-white-900 text-sm flex items-center justify-between">
+        <CardTitle className="text-gray-900 text-sm flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Package className="w-4 h-4 text-blue-600" />
             Matériel : {spotName}
           </span>
-          <div className="flex items-center gap-2" style={{ background: 'white' }}>
+          <div className="flex items-center gap-2">
             {selections.length > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="app-title-subsection px-2"
-                style={{ color: 'var(--color-red-supprime)', transform: 'none' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-red-supprime)'; e.currentTarget.style.borderWidth = '1px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.borderWidth = '1px'; }}
+                className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                 onClick={() => onChange([])}
               >
-                <Trash2 style={{ width: '1.15rem', height: '1.15rem', marginRight: '0.25rem', flexShrink: 0, color: 'var(--color-red-supprime)' }} />
+                <Trash2 className="w-3 h-3 mr-1" />
                 Tout supprimer
               </Button>
             )}
+            <div className="relative ml-2">
+
+              <Button
+                size="sm"
+                className="h-6 w-6 p-0 !bg-white !hover:bg-gray-100 !text-gray-500 border border-gray-300"
+                onClick={() => {
+                  setIsAddMenuOpen((prev) => !prev);
+                  setAddError('');
+                }}
+                aria-label="Ajouter un instrument"
+          
+              >
+                <span className="text-gray-500 font-bold text-lg leading-none">+</span>
+              </Button>
+
+              {isAddMenuOpen && (
+                <div ref={addMenuRef} className="absolute left-full ml-2 top-0 z-20 w-72 rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="new-gear-name" className="text-xs text-gray-600">Nom de l’instrument</Label>
+                    <Input
+                      id="new-gear-name"
+                      value={newGearName}
+                      onChange={(e) => setNewGearName(e.target.value)}
+                      placeholder="Ex: Grosse caisse"
+                      className="h-8"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="new-gear-volume" className="text-xs text-gray-600">Volume par instrument (m³)</Label>
+                    <Input
+                      id="new-gear-volume"
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={newGearVolume}
+                      onChange={(e) => setNewGearVolume(e.target.value)}
+                      placeholder="Ex: 1.2"
+                      className="h-8"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="new-gear-category" className="text-xs text-gray-600">Catégorie</Label>
+                    <Input
+                      id="new-gear-category"
+                      list="gear-categories-list"
+                      value={newGearCategory}
+                      onChange={(e) => setNewGearCategory(e.target.value)}
+                      placeholder="Ex: Percussion"
+                      className="h-8"
+                    />
+                    <datalist id="gear-categories-list">
+                      {categorySuggestions.map((category) => (
+                        <option key={category} value={category} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  {addError && <p className="text-xs text-red-600">{addError}</p>}
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button size="sm" className="h-8 flex-1 !bg-white !hover:bg-gray-100 !text-gray-500 border border-gray-300" onClick={handleAddGear}>
+                      Ajouter
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={() => {
+                        setIsAddMenuOpen(false);
+                        setAddError('');
+                      }}
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                </div>
+                </div>
+              )}
+            </div>
             <span className="text-blue-600 font-bold">{totalVolume.toFixed(1)} m³</span>
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 overflow-y-auto pr-2 max-h-[40vh]">
+      <CardContent className="space-y-2 max-h-[48vh] overflow-y-auto pr-2">
         {categories.map((category: string) => (
           <div key={category} className="border border-gray-200 rounded-lg overflow-visible bg-gray-50">
             <div className="w-full px-3 py-2 flex items-center justify-between hover:bg-gray-100 transition-colors cursor-pointer">
@@ -219,12 +298,12 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                           >
                             -
                           </Button>
-                          <input
+                          <Input
                             type="number"
                             min="0"
                             value={quantity}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateQuantity(gear.id, parseInt(e.target.value) || 0)}
-                            style={{ width: '3rem', height: '1.75rem', textAlign: 'center', border: '1px solid #d1d5db', borderRadius: '0.375rem', fontSize: '0.875rem', color: '#111827', background: 'white', minWidth: '0', padding: '0' }}
+                            className="h-7 w-14 text-center bg-white border-gray-300 text-gray-900 text-sm"
                           />
                           <Button
                             variant="ghost"
@@ -240,30 +319,27 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                     );
                   })}
                 {gears.filter((g: any) => g.category === category).length === 0 && (
-                  <p className="text-xs text-gray-500 italic">Aucun instrument dans cette Catégorie.</p>
+                  <p className="text-xs text-gray-500 italic">Aucun instrument dans cette catégorie.</p>
                 )}
               </div>
             )}
           </div>
         ))}
-      </CardContent>
-
-      {/* Zone fixe en bas — formulaire ou bouton, toujours visible */}
-      <div style={{ padding: '0.5em', borderTop: '1px solid #e5e7eb' }}>
-        {isAddMenuOpen ? (
-          <div className="rounded-lg border border-gray-200 space-y-3" style={{ padding: '0.5em' }}>
-            <div style={{ paddingBottom: '0.4em', paddingLeft: '0.5em', paddingRight: '0.5em' }}>
-              <Label htmlFor="new-gear-name" style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Nom d&apos;instrument</Label>
+        {/* Formulaire d'ajout inline */}
+        {isAddMenuOpen && (
+          <div className="grid grid-cols-1 gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 mt-2">
+            <div className="space-y-1">
+              <Label htmlFor="new-gear-name" className="text-xs text-gray-600">Nom d'instrument</Label>
               <Input
                 id="new-gear-name"
                 value={newGearName}
                 onChange={(e) => setNewGearName(e.target.value)}
                 placeholder="Ex: Grosse caisse"
-                className="bg-white border-gray-300 text-gray-900"
+                className="bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
               />
             </div>
-            <div style={{ paddingBottom: '0.4em', paddingLeft: '0.5em', paddingRight: '0.5em' }}>
-              <Label htmlFor="new-gear-volume" style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Volume par instrument (m³)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="new-gear-volume" className="text-xs text-gray-600">Volume par instrument (m³)</Label>
               <Input
                 id="new-gear-volume"
                 type="number"
@@ -272,52 +348,48 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
                 value={newGearVolume}
                 onChange={(e) => setNewGearVolume(e.target.value)}
                 placeholder="Ex: 1.2"
-                className="bg-white border-gray-300 text-gray-900"
+                className="bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
               />
             </div>
-            <div style={{ paddingBottom: '0.4em', paddingLeft: '0.5em', paddingRight: '0.5em' }}>
-              <Label htmlFor="new-gear-category" style={{ display: 'block', paddingBottom: '0.3em', fontSize: '0.85rem', fontWeight: 'bold', color: '#000' }}>Catégorie</Label>
+            <div className="space-y-1">
+              <Label htmlFor="new-gear-category" className="text-xs text-gray-600">Catégorie</Label>
               <Input
                 id="new-gear-category"
                 list="gear-categories-list"
                 value={newGearCategory}
                 onChange={(e) => setNewGearCategory(e.target.value)}
                 placeholder="Ex: Percussion"
-                className="bg-white border-gray-300 text-gray-900"
+                className="bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
               />
               <datalist id="gear-categories-list">
-                {categorySuggestions.map((cat) => (
-                  <option key={cat} value={cat} />
+                {categorySuggestions.map((category) => (
+                  <option key={category} value={category} />
                 ))}
               </datalist>
             </div>
-            {addError && <p className="text-red-500 text-xs" style={{ paddingLeft: '0.5em' }}>{addError}</p>}
-            <div className="flex gap-2" style={{ paddingTop: '0.2em', paddingLeft: '0.5em', paddingRight: '0.5em' }}>
+            {addError && <p className="text-xs text-red-600">{addError}</p>}
+            <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="ghost"
-                className="bouton_add flex-1 bg-white text-gray-900"
-                style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: '#d1d5db', transition: 'border-color 150ms, border-width 150ms' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.borderWidth = '1px'; }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={handleAddGear}
               >
-                Ajouter
+                Confirmer
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
-                className="bouton_add text-gray-900"
-                style={{ borderStyle: 'solid', borderWidth: '1px', borderColor: 'transparent', transition: 'border-color 150ms, border-width 150ms' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#000'; e.currentTarget.style.borderWidth = '2px'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.borderWidth = '1px'; }}
+                className="flex-1 border border-gray-300 text-gray-700"
                 onClick={() => { setIsAddMenuOpen(false); setAddError(''); }}
               >
                 Annuler
               </Button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* Bouton ajouter un instrument */}
+        {!isAddMenuOpen && (
           <div style={{ padding: '0.2em' }}>
             <Button
               variant="ghost"
@@ -329,11 +401,10 @@ export function VolumeEstimator({ selections, onChange, spotName, gears, onAddGe
               onClick={() => { setIsAddMenuOpen(true); setAddError(''); }}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Ajouter un instrument
+              ajouter un instrument
             </Button>
           </div>
-        )}
-      </div>
+        )}      </CardContent>
     </Card>
   );
 }
