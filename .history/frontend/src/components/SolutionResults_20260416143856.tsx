@@ -358,50 +358,79 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
             </div>
           </div>
 
-          <div className="p-4 flex flex-col flex-grow pt-0 bg-white" style={{ gap: '0.5em', display: 'flex', flexDirection: 'column' }}>
-            {concerts.map((concert, index) => (
-              <div key={concert.id} className="rounded-2xl bg-white px-4 py-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-36 shrink-0 self-center flex flex-col items-center justify-center text-sm font-bold text-violet-700">
-                    <span>{concert.concertTime}</span>
-                    {concert.concertDuration > 0 && (
-                      <>
-                        <div className="w-1.5 h-1.5 rounded-full my-2 bg-violet-400" />
-                        <span className="text-violet-500 font-semibold">{addMinutesToTime(concert.concertTime, concert.concertDuration)}</span>
-                      </>
-                    )}
-                  </div>
-                  {/* Barre verticale violette */}
-                  <div className="self-stretch shrink-0 flex items-center justify-center" style={{ marginRight: '0em' }}>
-                    <div className="w-0.5 rounded-full bg-violet-300" style={{ height: '80%' }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="app-title-subsection text-violet-700">[{index + 1}] {concert.name}</span>
+          <div className="px-4 pb-4 flex flex-col flex-grow pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
+            {concerts.map((concert, index) => {
+              const concertEnd = concert.concertDuration > 0
+                ? addMinutesToTime(concert.concertTime, concert.concertDuration)
+                : null;
+              const instruments = concert.instrumentsLabel
+                ? concert.instrumentsLabel.split('  |  ').map(s => s.trim()).filter(Boolean)
+                : [];
+              return (
+                <div key={concert.id} className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex">
+                  {/* Barre verticale violet */}
+                  <div style={{ width: '4px', flexShrink: 0, backgroundColor: '#7c3aed' }} />
+
+                  <div className="flex gap-3 py-3 px-3 flex-1 min-w-0">
+                    {/* Colonne heure + point */}
+                    <div className="flex flex-col items-center justify-center shrink-0" style={{ minWidth: '2.8rem' }}>
+                      <span className="text-sm font-bold text-violet-700">{concert.concertTime}</span>
+                      {concertEnd && (
+                        <>
+                          <div className="w-2 h-2 rounded-full my-1" style={{ backgroundColor: '#7c3aed' }} />
+                          <span className="text-xs font-semibold" style={{ color: '#a78bfa' }}>{concertEnd}</span>
+                        </>
+                      )}
                     </div>
-                    <div className="app-text-meta mt-2 flex flex-wrap gap-2" style={{ paddingLeft: '1em' , paddingBottom : '0.4em'}}>
-                      <span className="flex items-center gap-1 bg-gray-100 text-gray-600 rounded-full px-3 py-1"><Clock style={{ width: '0.9em', height: '0.9em' }} />{concert.concertDuration} min</span>
-                      <span className="flex items-center gap-1 bg-gray-100 text-gray-600 rounded-full px-3 py-1"><ArrowUp style={{ width: '0.9em', height: '0.9em' }} />{concert.setupDuration} min</span>
-                      <span className="flex items-center gap-1 bg-gray-100 text-gray-600 rounded-full px-3 py-1"><ArrowDown style={{ width: '0.9em', height: '0.9em' }} />{concert.teardownDuration} min</span>
-                    </div>
-                    {concert.instrumentsLabel ? (
-                      <div className="mt-3 flex flex-wrap gap-2" style={{ paddingLeft: '0.8em' , paddingTop : '0em'}}>
-                        {concert.instrumentsLabel.split('  |  ').map((inst, i) => (
-                          <span
-                            key={i}
-                            className="text-sm font-semibold text-violet-600 bg-violet-50 rounded-full px-3 py-1"
-                          >
-                            {inst.trim()}
-                          </span>
-                        ))}
+
+                    {/* Contenu */}
+                    <div className="flex-1 min-w-0">
+                      {/* Nom + badge */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700"
+                        >
+                          {index + 1}
+                        </span>
+                        <span className="app-title-subsection text-violet-700" style={{ transform: 'none' }}>{concert.name}</span>
                       </div>
-                    ) : (
-                      <div className="mt-3 text-sm text-gray-400 italic">Aucun instrument selectionne</div>
-                    )}
+
+                      {/* Durées avec SVG */}
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="number_subtitle flex items-center gap-1">
+                          <Clock style={{ width: '0.85em', height: '0.85em' }} />
+                          {concert.concertDuration} min
+                        </span>
+                        <span className="number_subtitle flex items-center gap-1">
+                          <ArrowUp style={{ width: '0.85em', height: '0.85em' }} />
+                          {concert.setupDuration} min
+                        </span>
+                        <span className="number_subtitle flex items-center gap-1">
+                          <ArrowDown style={{ width: '0.85em', height: '0.85em' }} />
+                          {concert.teardownDuration} min
+                        </span>
+                      </div>
+
+                      {/* Bulles instruments */}
+                      {instruments.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {instruments.map((inst, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-50 text-violet-700"
+                            >
+                              {inst}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Aucun instrument sélectionné</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

@@ -358,9 +358,9 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
             </div>
           </div>
 
-          <div className="p-4 flex flex-col flex-grow pt-0 bg-white" style={{ gap: '0.5em', display: 'flex', flexDirection: 'column' }}>
+          <div className="p-4 flex flex-col flex-grow pt-0 space-y-3 bg-gradient-to-b from-gray-50 to-white">
             {concerts.map((concert, index) => (
-              <div key={concert.id} className="rounded-2xl bg-white px-4 py-4">
+              <div key={concert.id} className="rounded-2xl bg-white px-4 py-4 shadow-sm">
                 <div className="flex items-center gap-4">
                   <div className="w-36 shrink-0 self-center flex flex-col items-center justify-center text-sm font-bold text-violet-700">
                     <span>{concert.concertTime}</span>

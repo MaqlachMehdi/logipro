@@ -548,13 +548,13 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 1 }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Mode toggle — only shown if we have solver routes */}
       {hasVehicleRoutes && (
         <div style={{
-          position: 'absolute', top: 8, right: 8, zIndex: 20,
+          position: 'absolute', top: 8, right: 8, zIndex: 500,
           display: 'flex', gap: 4, background: 'white',
-          borderRadius: 8, padding: 4,
+          borderRadius: 8, padding: 4, border: '1px solid var(--color-B)',
         }}>
           <button
             onClick={handleModeStatic}
@@ -579,22 +579,22 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
       {hasVehicleRoutes && mode === 'dynamic' && (
         <div style={{
           position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 20, background: 'white',
+          zIndex: 1000, background: 'rgba(35,35,40,0.95)', border: '1px solid #3a3a45',
           borderRadius: 12, padding: '12px 20px', display: 'flex', alignItems: 'center',
-          gap: 12, minWidth: 420, boxShadow: '0 4px 16px rgba(0,0,0,.1)',
+          gap: 12, minWidth: 420, boxShadow: '0 8px 32px rgba(0,0,0,.4)',
         }}>
           {/* Play/Pause */}
           <button
             onClick={handlePlayPause}
             style={{
-              width: 40, height: 40, borderRadius: '50%', background: 'var(--color-B)', border: 'none',
+              width: 40, height: 40, borderRadius: '50%', background: '#1d4ed8', border: 'none',
               color: 'white', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}
           >{isPlaying ? '⏸' : '▶'}</button>
 
           {/* Time display */}
-          <span style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, color: 'var(--color-B)', minWidth: 60, textAlign: 'center' }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, color: '#60a5fa', minWidth: 60, textAlign: 'center' }}>
             {formatTime(Math.round(currentTime))}
           </span>
 
@@ -602,7 +602,7 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
           <input
             type="range" min={START_TIME} max={END_TIME} value={Math.round(currentTime)}
             onChange={(e) => handleSlider(Number(e.target.value))}
-            style={{ flex: 1, accentColor: 'var(--color-B)', cursor: 'pointer' }}
+            style={{ flex: 1, accentColor: '#60a5fa', cursor: 'pointer' }}
           />
 
           {/* Speed buttons */}
@@ -613,8 +613,8 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
                 onClick={() => setSpeed(s)}
                 style={{
                   padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none',
-                  background: speed === s ? 'var(--color-B)' : '#f3f4f6',
-                  color: speed === s ? 'white' : 'var(--color-B-dark)',
+                  background: speed === s ? '#60a5fa' : '#2d2d35',
+                  color: speed === s ? 'white' : '#a0a0a8',
                 }}
               >{s}x</button>
             ))}

@@ -548,11 +548,11 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
   }, []);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 1 }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Mode toggle — only shown if we have solver routes */}
       {hasVehicleRoutes && (
         <div style={{
-          position: 'absolute', top: 8, right: 8, zIndex: 20,
+          position: 'absolute', top: 8, right: 8, zIndex: 5,
           display: 'flex', gap: 4, background: 'white',
           borderRadius: 8, padding: 4,
         }}>
@@ -579,7 +579,7 @@ export const LeafletMap: React.FC<LeafletMapProps> = ({
       {hasVehicleRoutes && mode === 'dynamic' && (
         <div style={{
           position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 20, background: 'white',
+          zIndex: 5, background: 'white',
           borderRadius: 12, padding: '12px 20px', display: 'flex', alignItems: 'center',
           gap: 12, minWidth: 420, boxShadow: '0 4px 16px rgba(0,0,0,.1)',
         }}>
