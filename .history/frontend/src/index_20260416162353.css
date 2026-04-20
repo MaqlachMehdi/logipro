@@ -1,0 +1,292 @@
+@import "tailwindcss";
+
+/* Empêche la carte Leaflet de passer au-dessus du header (z-50 = 50) */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10 !important;
+}
+
+:root {
+  --font-family-app: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-title-section: 1.400rem;
+  --line-height-title-section: 2.8rem;
+  --font-size-title-subsection: 1.15rem;
+  --line-height-title-subsection: 1.575rem;
+  --font-size-label: 0.75rem;
+  --line-height-label: 1rem;
+  --font-size-meta: 0.75rem;
+  --line-height-meta: 1rem;
+
+  /* Base palette */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f8f9fa;
+  --color-neutral-100: #f1f1f1;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-600: #4b5563;
+  --color-slate-700: #374151;
+  --color-slate-500: #6b7280;
+  --color-slate-900: #111827;
+  --color-ink-950: #1a1a1a;
+  --color-ink-800: #213547;
+  --color-brand-400: #747bff;
+  --color-brand-500: #646cff;
+  --color-brand-600: #535bf2;
+
+  /* Semantic roles */
+  --color-bg-app: var(--color-neutral-50);
+  --color-bg-elevated: var(--color-neutral-0);
+  --color-bg-muted: var(--color-neutral-100);
+  --color-bg-control: #f9f9f9;
+  --color-text-base: var(--color-ink-950);
+  --color-text-root: var(--color-ink-800);
+  --color-text-primary: var(--color-slate-900);
+  --color-text-secondary: var(--color-slate-700);
+  --color-text-subtle: var(--color-slate-600);
+  --color-text-muted: var(--color-slate-500);
+  --color-border-soft: var(--color-slate-300);
+  --color-border-strong: var(--color-slate-400);
+  --color-border-interactive: var(--color-brand-500);
+  --color-link-hover: var(--color-brand-600);
+  --color-link-hover-soft: var(--color-brand-400);
+
+  /* Section accents */
+  --color-accent-spots: #f43f5e;
+  --color-accent-gear: #0ea5e9;
+  --color-accent-fleet: #f59e0b;
+  --color-accent-optimization: #10b981;
+  --color-accent-details: var(--color-slate-600);
+
+  /* Actions destructives */
+  --color-red-supprime: #f92b2b;
+
+  /* ── Vehicle / accent palette ──
+     Source of truth: src/config/vehicle-colors.ts */
+  --color-V: #66B0B7;
+  --color-B: #6688B7;
+  --color-M: #6D66B7;
+  --color-R: #B76D66;
+  --color-O: #B0B766;
+
+  --color-V-dark: #4A8A90;
+  --color-B-dark: #4A6690;
+  --color-M-dark: #504A90;
+  --color-R-dark: #904A45;
+  --color-O-dark: #8A9045;
+
+  --color-V-light: #EDF6F7;
+  --color-B-light: #EDF1F7;
+  --color-M-light: #EEEDF7;
+  --color-R-light: #F7EDEC;
+  --color-O-light: #F6F7ED;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg-app);
+  color: var(--color-text-base);
+  font-family: var(--font-family-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app-title-section {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-title-section);
+  line-height: var(--line-height-title-section);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  transform: translateX(0.3em);
+}
+.app-title-section svg {
+  width: 1.3em;
+  height: 1.3em;
+  flex-shrink: 0;
+  transform: translateX(0.1em);
+}
+
+.app-title-section .title-emoji {
+  font-size: 1em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-title-subsection {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-title-subsection);
+  line-height: var(--line-height-title-subsection);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  transform : translateX(0.2em);
+}
+
+.bouton_add {
+  font-family: var(--font-family-app);
+  font-size: calc(var(--font-size-title-subsection) * 1.15);
+  line-height: calc(var(--line-height-title-subsection) * 1.1);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.sub_title_subsection {
+  font-family: var(--font-family-app);
+  font-size: calc(var(--font-size-title-subsection) * 0.9);
+  line-height: calc(var(--line-height-title-subsection) * 0.9);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--color-text-muted);
+}
+
+.number_subtitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-family-app) !important;
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.005em !important;
+  color: var(--color-text-subtle) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.number_subtitle svg,
+.number_subtitle .title-emoji {
+  width: 1.5em;
+  height: 1em;
+  flex-shrink: 0;
+}
+
+.app-text-label {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--color-text-secondary);
+}
+
+.app-text-eyebrow {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.app-text-meta {
+  font-family: var(--font-family-app);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  color: var(--color-text-muted);
+}
+
+.input-number-centered {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.input-number-centered::-webkit-outer-spin-button,
+.input-number-centered::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-soft);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+/* global button reset : ne pas forcer une couleur sombre */
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  /* laisser Tailwind contrôler le font-weight */
+  /* font-weight: 500; */
+  font-family: inherit;
+  background-color: transparent;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: var(--color-border-interactive);
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: var(--color-text-root);
+    background-color: var(--color-bg-elevated);
+  }
+  a:hover {
+    color: var(--color-link-hover-soft);
+  }
+  button {
+    background-color: var(--color-bg-control);
+  }
+}
