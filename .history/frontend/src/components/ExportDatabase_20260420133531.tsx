@@ -1,11 +1,59 @@
 import { Button } from './ui/button';
 import { Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui';
+import * as XLSX from 'xlsx';
 import { useState } from 'react';
 
-export function ExportDatabase() {
+interface Venue {
+  id: string;
+  name: string;
+  address: string;
+  timeWindow: [number, number];
+  lat: number;
+  lon: number;
+  demand: number;
+  instruments?: string;
+  concertDuration?: number;
+}
+
+interface Vehicle {
+  id: string;
+  name: string;
+  capacity: number;
+  type?: string;
+}
+
+interface Gear {
+  id: string;
+  name: string;
+  volume: number;
+}
+
+interface RouteStop {
+  venueId: string;
+  type: string;
+  time: string;
+  volume: number;
+}
+
+interface Route {
+  vehicleId: string;
+  stops: RouteStop[];
+  totalDistance: number;
+  totalVolume: number;
+}
+
+interface ExportDatabaseProps {
+  vehicles: Vehicle[];
+  venues: Venue[];
+  gearCatalog: Gear[];
+  routes: Route[];
+}
+
+export function ExportDatabase({ vehicles, venues, gearCatalog, routes }: ExportDatabaseProps) {
+  type SheetCell = string | number;
   const [loading, setLoading] = useState(false);
-  const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   /**
    * Appelle GET /api/export/all → télécharge base_complete.csv

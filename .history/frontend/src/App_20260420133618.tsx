@@ -117,7 +117,7 @@ function appReducer(state: AppState, action: any): AppState {
 }
 
 /* --------------------- APP --------------------- */
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 async function geocodeAddress(address: string): Promise<{ lat: number; lon: number } | null> {
   if (!address?.trim()) return null;

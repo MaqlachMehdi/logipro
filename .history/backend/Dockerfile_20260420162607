@@ -1,0 +1,33 @@
+# ---- Backend LogiPro ----
+# Node.js + Python dans le même conteneur (Python appelé via spawn depuis Node)
+FROM node:22-slim
+
+# Installer Python 3, pip et venv
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Dépendances Node (en premier pour profiter du cache Docker)
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Créer le venv Python et installer les dépendances solver
+COPY requirements.txt ./
+RUN python3 -m venv /app/solver/.venv \
+    && /app/solver/.venv/bin/pip install --no-cache-dir --upgrade pip \
+    && /app/solver/.venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# Copier le reste du code
+COPY . .
+
+# Créer le dossier data (SQLite, persisté via volume)
+RUN mkdir -p /app/data
+
+EXPOSE 5000
+
+CMD ["node", "server.js"]

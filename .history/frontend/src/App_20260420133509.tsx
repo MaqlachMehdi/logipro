@@ -117,7 +117,7 @@ function appReducer(state: AppState, action: any): AppState {
 }
 
 /* --------------------- APP --------------------- */
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 async function geocodeAddress(address: string): Promise<{ lat: number; lon: number } | null> {
   if (!address?.trim()) return null;
@@ -480,7 +480,19 @@ export default function App() {
               />
 
               {state.spots.length > 0 && (
-                <ExportDatabase />
+                <ExportDatabase
+                  vehicles={state.vehicles}
+                  venues={state.spots.map((s) => ({
+                    ...s,
+                    timeWindow: [8, 23] as [number, number],
+                    demand: 0,
+                  }))}
+                  gearCatalog={gears.map((g) => ({ id: g.id, name: g.name, volume: g.volume }))}
+                  routes={state.routes.map((r) => ({
+                    ...r,
+                    totalVolume: r.totalVolume,
+                  }))}
+                />
               )}
             </div>
           </div>
