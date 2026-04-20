@@ -20,7 +20,7 @@ services:
         VITE_API_URL: ""
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "0.0.0.0:8090:80"   # accessible depuis internet via IP:8090
     depends_on:
       - backend
 
