@@ -30,22 +30,20 @@ const db = new DatabaseSync(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS vehicles (
-    id TEXT NOT NULL,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     type TEXT NOT NULL,
     capacity REAL NOT NULL,
     color TEXT NOT NULL,
     is_available INTEGER NOT NULL DEFAULT 1,
-    user_id TEXT NOT NULL DEFAULT 'default',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (id, user_id)
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS spots (
-    id TEXT NOT NULL,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     address TEXT NOT NULL,
     lat REAL NOT NULL,
@@ -57,10 +55,8 @@ db.exec(`
     setup_duration INTEGER,
     teardown_duration INTEGER,
     gear_selections_json TEXT NOT NULL DEFAULT '[]',
-    user_id TEXT NOT NULL DEFAULT 'default',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (id, user_id)
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 
@@ -158,8 +154,7 @@ function bootstrapUser(uid) {
         gear_selections_json, user_id, created_at, updated_at
       )
       SELECT
-        CASE WHEN id = 'depot-permanent' THEN 'depot-permanent' ELSE id || '-' || ? END,
-        name, address, lat, lon,
+        id || '-' || ?, name, address, lat, lon,
         opening_time, closing_time, concert_time,
         concert_duration, setup_duration, teardown_duration,
         gear_selections_json, ?, created_at, updated_at

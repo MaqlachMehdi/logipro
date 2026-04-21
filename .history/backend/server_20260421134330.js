@@ -30,22 +30,20 @@ const db = new DatabaseSync(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS vehicles (
-    id TEXT NOT NULL,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     type TEXT NOT NULL,
     capacity REAL NOT NULL,
     color TEXT NOT NULL,
     is_available INTEGER NOT NULL DEFAULT 1,
-    user_id TEXT NOT NULL DEFAULT 'default',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (id, user_id)
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS spots (
-    id TEXT NOT NULL,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     address TEXT NOT NULL,
     lat REAL NOT NULL,
@@ -57,10 +55,8 @@ db.exec(`
     setup_duration INTEGER,
     teardown_duration INTEGER,
     gear_selections_json TEXT NOT NULL DEFAULT '[]',
-    user_id TEXT NOT NULL DEFAULT 'default',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (id, user_id)
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 
@@ -158,8 +154,7 @@ function bootstrapUser(uid) {
         gear_selections_json, user_id, created_at, updated_at
       )
       SELECT
-        CASE WHEN id = 'depot-permanent' THEN 'depot-permanent' ELSE id || '-' || ? END,
-        name, address, lat, lon,
+        id || '-' || ?, name, address, lat, lon,
         opening_time, closing_time, concert_time,
         concert_duration, setup_duration, teardown_duration,
         gear_selections_json, ?, created_at, updated_at
@@ -199,7 +194,6 @@ app.use((req, res, next) => {
   }
 
   req.userId = uid;
-  console.log(`[${req.method}] ${req.path} — user: ${uid.substring(0, 8)}`);
   next();
 });
 
@@ -319,7 +313,7 @@ const replaceGearsTx = (gears, userId) => {
  */
 app.get('/api/vehicles', (req, res) => {
   try {
-    const rows = selectVehiclesStmt.all({ userId: req.userId });
+    const rows = selectVehiclesStmt.all();
     const vehicles = rows.map((r) => ({ ...r, isAvailable: r.isAvailable === 1 }));
     return res.json({ success: true, vehicles });
   } catch (error) {
@@ -369,10 +363,9 @@ app.put('/api/vehicles/sync', (req, res) => {
       capacity: v.capacity,
       color: v.color,
       isAvailable: v.isAvailable === false || v.isAvailable === 0 ? 0 : 1,
-      userId: req.userId,
     }));
-    replaceVehiclesTx(dbRows, req.userId);
-    const rows = selectVehiclesStmt.all({ userId: req.userId });
+    replaceVehiclesTx(dbRows);
+    const rows = selectVehiclesStmt.all();
     const persisted = rows.map((r) => ({ ...r, isAvailable: r.isAvailable === 1 }));
     return res.json({ success: true, vehicles: persisted });
   } catch (error) {
@@ -390,7 +383,7 @@ app.put('/api/vehicles/sync', (req, res) => {
  */
 app.get('/api/spots', (req, res) => {
   try {
-    const rows = selectSpotsStmt.all({ userId: req.userId });
+    const rows = selectSpotsStmt.all();
     const spots = rows.map(mapSpotRow);
     return res.json({ success: true, spots });
   } catch (error) {
@@ -423,14 +416,14 @@ app.put('/api/spots/sync', (req, res) => {
     typeof spot.address === 'string' &&
     typeof spot.lat === 'number' &&
     typeof spot.lon === 'number' &&
-    (spot.id === 'depot-permanent' || !(spot.lat === 0 && spot.lon === 0)) &&
+    !(spot.lat === 0 && spot.lon === 0) &&
     typeof spot.openingTime === 'string' &&
     typeof spot.closingTime === 'string' &&
     Array.isArray(spot.gearSelections)
   ));
 
   if (!isValid) {
-    const badSpot = spots.find((s) => s && s.id !== 'depot-permanent' && s.lat === 0 && s.lon === 0);
+    const badSpot = spots.find((s) => s && s.lat === 0 && s.lon === 0);
     const errorMsg = badSpot
       ? `Lieu "${badSpot.name}" non géocodé (lat=0, lon=0). Vérifiez l'adresse.`
       : 'Format lieu invalide';
@@ -453,13 +446,12 @@ app.put('/api/spots/sync', (req, res) => {
       concertDuration: typeof spot.concertDuration === 'number' ? spot.concertDuration : null,
       setupDuration: typeof spot.setupDuration === 'number' ? spot.setupDuration : null,
       teardownDuration: typeof spot.teardownDuration === 'number' ? spot.teardownDuration : null,
-      gearSelectionsJson: JSON.stringify(spot.gearSelections || []),
-      userId: req.userId,
+      gearSelectionsJson: JSON.stringify(spot.gearSelections || [])
     }));
 
-    replaceSpotsTx(dbRows, req.userId);
+    replaceSpotsTx(dbRows);
 
-    const rows = selectSpotsStmt.all({ userId: req.userId });
+    const rows = selectSpotsStmt.all();
     const persisted = rows.map(mapSpotRow);
 
     return res.json({ success: true, spots: persisted });
@@ -478,7 +470,7 @@ app.put('/api/spots/sync', (req, res) => {
  */
 app.get('/api/gears', (req, res) => {
   try {
-    const gears = selectGearsStmt.all({ userId: req.userId });
+    const gears = selectGearsStmt.all();
     return res.json({ success: true, gears });
   } catch (error) {
     console.error('❌ Erreur lecture matériels:', error);
@@ -519,9 +511,8 @@ app.put('/api/gears/sync', (req, res) => {
   }
 
   try {
-    const dbRows = gears.map((g) => ({ ...g, userId: req.userId }));
-    replaceGearsTx(dbRows, req.userId);
-    const persisted = selectGearsStmt.all({ userId: req.userId });
+    replaceGearsTx(gears);
+    const persisted = selectGearsStmt.all();
     return res.json({ success: true, gears: persisted });
   } catch (error) {
     console.error('❌ Erreur sync matériels:', error);
@@ -682,13 +673,13 @@ app.post('/api/optimize/run', (req, res) => {
   // 1. Lire les spots depuis la DB (dépôt inclus grâce à son id 'depot-permanent')
   let spots, vehicles, gears;
   try {
-    const spotRows = selectSpotsStmt.all({ userId: req.userId });
+    const spotRows = selectSpotsStmt.all();
     spots = spotRows.map(mapSpotRow);
 
-    const vehicleRows = selectVehiclesStmt.all({ userId: req.userId });
+    const vehicleRows = selectVehiclesStmt.all();
     vehicles = vehicleRows;
 
-    const gearRows = selectGearsStmt.all({ userId: req.userId });
+    const gearRows = selectGearsStmt.all();
     gears = gearRows;
   } catch (err) {
     console.error('❌ Erreur lecture DB:', err);
@@ -859,10 +850,10 @@ app.post('/api/optimize/run', (req, res) => {
  */
 app.get('/api/optimize/preview', (req, res) => {
   try {
-    const spotRows = selectSpotsStmt.all({ userId: req.userId });
+    const spotRows = selectSpotsStmt.all();
     const spots = spotRows.map(mapSpotRow);
-    const vehicleRows = selectVehiclesStmt.all({ userId: req.userId });
-    const gears = selectGearsStmt.all({ userId: req.userId });
+    const vehicleRows = selectVehiclesStmt.all();
+    const gears = selectGearsStmt.all();
 
     const depot = spots.find((s) => s.id === 'depot-permanent');
     if (!depot) {
@@ -979,10 +970,10 @@ app.get('/api/info', (req, res) => {
  */
 app.get('/api/export/all', (req, res) => {
   try {
-    const spotRows = selectSpotsStmt.all({ userId: req.userId });
+    const spotRows = selectSpotsStmt.all();
     const spots = spotRows.map(mapSpotRow);
-    const vehicles = selectVehiclesStmt.all({ userId: req.userId });
-    const gears = selectGearsStmt.all({ userId: req.userId });
+    const vehicles = selectVehiclesStmt.all();
+    const gears = selectGearsStmt.all();
 
     const gearMap = {};
     for (const g of gears) {

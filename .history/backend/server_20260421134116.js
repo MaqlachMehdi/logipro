@@ -11,8 +11,7 @@ const app = express();
 const PORT = 5000;
 
 // Middleware
-app.use(cors({ origin: true, credentials: true }));
-app.use(cookieParser());
+app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb' }));
 
@@ -30,22 +29,20 @@ const db = new DatabaseSync(dbPath);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS vehicles (
-    id TEXT NOT NULL,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     type TEXT NOT NULL,
     capacity REAL NOT NULL,
     color TEXT NOT NULL,
     is_available INTEGER NOT NULL DEFAULT 1,
-    user_id TEXT NOT NULL DEFAULT 'default',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (id, user_id)
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS spots (
-    id TEXT NOT NULL,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     address TEXT NOT NULL,
     lat REAL NOT NULL,
@@ -57,10 +54,8 @@ db.exec(`
     setup_duration INTEGER,
     teardown_duration INTEGER,
     gear_selections_json TEXT NOT NULL DEFAULT '[]',
-    user_id TEXT NOT NULL DEFAULT 'default',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (id, user_id)
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 
@@ -109,119 +104,24 @@ db.exec(`
   )
 `);
 
-// ========================================
-// MIGRATIONS — colonne user_id sur chaque table
-// Règle : les données existantes deviennent "default" (gabarit de départ)
-// ========================================
-const USER_DEFAULT = 'default';
-
-(function runMigrations() {
-  const tables = ['vehicles', 'spots', 'gears'];
-  for (const table of tables) {
-    try {
-      const cols = db.prepare(`PRAGMA table_info('${table}')`).all();
-      if (!cols.some((c) => c.name === 'user_id')) {
-        db.exec(`ALTER TABLE ${table} ADD COLUMN user_id TEXT NOT NULL DEFAULT '${USER_DEFAULT}'`);
-        console.log(`✓ Migration: user_id ajouté à ${table}`);
-      }
-    } catch (err) {
-      console.warn(`⚠️ Migration user_id sur ${table}:`, err.message);
-    }
-  }
-})();
-
-// ========================================
-// MIDDLEWARE — identification utilisateur par cookie UUID
-// ========================================
-const COOKIE_NAME  = 'logipro_uid';
-const COOKIE_TTL   = 365 * 24 * 60 * 60 * 1000; // 1 an en ms
-
-/**
- * Copie le gabarit 'default' vers un nouvel utilisateur (dans une transaction).
- * Appelée UNE seule fois à la première visite.
- */
-function bootstrapUser(uid) {
-  try {
-    db.exec('BEGIN');
-
-    db.prepare(`
-      INSERT INTO vehicles (id, name, type, capacity, color, is_available, user_id, created_at, updated_at)
-      SELECT id || '-' || ?, name, type, capacity, color, is_available, ?, created_at, updated_at
-      FROM vehicles WHERE user_id = ?
-    `).run(uid.substring(0, 8), uid, USER_DEFAULT);
-
-    db.prepare(`
-      INSERT INTO spots (
-        id, name, address, lat, lon,
-        opening_time, closing_time, concert_time,
-        concert_duration, setup_duration, teardown_duration,
-        gear_selections_json, user_id, created_at, updated_at
-      )
-      SELECT
-        CASE WHEN id = 'depot-permanent' THEN 'depot-permanent' ELSE id || '-' || ? END,
-        name, address, lat, lon,
-        opening_time, closing_time, concert_time,
-        concert_duration, setup_duration, teardown_duration,
-        gear_selections_json, ?, created_at, updated_at
-      FROM spots WHERE user_id = ?
-    `).run(uid.substring(0, 8), uid, USER_DEFAULT);
-
-    db.prepare(`
-      INSERT INTO gears (id, name, category, volume, user_id, created_at, updated_at)
-      SELECT id || '-' || ?, name, category, volume, ?, created_at, updated_at
-      FROM gears WHERE user_id = ?
-    `).run(uid.substring(0, 8), uid, USER_DEFAULT);
-
-    db.exec('COMMIT');
-    console.log(`✓ Nouvel utilisateur ${uid.substring(0, 8)} initialisé depuis '${USER_DEFAULT}'`);
-  } catch (err) {
-    db.exec('ROLLBACK');
-    console.warn('⚠️ Erreur bootstrap utilisateur:', err.message);
-  }
-}
-
-/**
- * Middleware : lit le cookie logipro_uid.
- * Si absent → génère un UUID, pose le cookie, copie le gabarit.
- * Injecte req.userId pour toutes les routes.
- */
-app.use((req, res, next) => {
-  let uid = req.cookies[COOKIE_NAME];
-
-  if (!uid) {
-    uid = randomUUID();
-    res.cookie(COOKIE_NAME, uid, {
-      maxAge: COOKIE_TTL,
-      httpOnly: true,
-      sameSite: 'lax',
-    });
-    bootstrapUser(uid);
-  }
-
-  req.userId = uid;
-  console.log(`[${req.method}] ${req.path} — user: ${uid.substring(0, 8)}`);
-  next();
-});
-
-// ========================================
-// PREPARED STATEMENTS — filtrés par user_id
-// ========================================
-
 const selectVehiclesStmt = db.prepare(`
   SELECT id, name, type, capacity, color, is_available AS isAvailable
   FROM vehicles
-  WHERE user_id = @userId
   ORDER BY created_at ASC
 `);
 
 const insertVehicleStmt = db.prepare(`
-  INSERT INTO vehicles (id, name, type, capacity, color, is_available, user_id, created_at, updated_at)
-  VALUES (@id, @name, @type, @capacity, @color, @isAvailable, @userId, datetime('now'), datetime('now'))
+  INSERT INTO vehicles (id, name, type, capacity, color, is_available, created_at, updated_at)
+  VALUES (@id, @name, @type, @capacity, @color, @isAvailable, datetime('now'), datetime('now'))
 `);
 
 const selectSpotsStmt = db.prepare(`
   SELECT
-    id, name, address, lat, lon,
+    id,
+    name,
+    address,
+    lat,
+    lon,
     opening_time AS openingTime,
     closing_time AS closingTime,
     concert_time AS concertTime,
@@ -230,7 +130,6 @@ const selectSpotsStmt = db.prepare(`
     teardown_duration AS teardownDuration,
     gear_selections_json AS gearSelectionsJson
   FROM spots
-  WHERE user_id = @userId
   ORDER BY created_at ASC
 `);
 
@@ -239,26 +138,25 @@ const insertSpotStmt = db.prepare(`
     id, name, address, lat, lon,
     opening_time, closing_time, concert_time,
     concert_duration, setup_duration, teardown_duration,
-    gear_selections_json, user_id, created_at, updated_at
+    gear_selections_json, created_at, updated_at
   )
   VALUES (
     @id, @name, @address, @lat, @lon,
     @openingTime, @closingTime, @concertTime,
     @concertDuration, @setupDuration, @teardownDuration,
-    @gearSelectionsJson, @userId, datetime('now'), datetime('now')
+    @gearSelectionsJson, datetime('now'), datetime('now')
   )
 `);
 
 const selectGearsStmt = db.prepare(`
   SELECT id, name, category, volume
   FROM gears
-  WHERE user_id = @userId
   ORDER BY created_at ASC
 `);
 
 const insertGearStmt = db.prepare(`
-  INSERT INTO gears (id, name, category, volume, user_id, created_at, updated_at)
-  VALUES (@id, @name, @category, @volume, @userId, datetime('now'), datetime('now'))
+  INSERT INTO gears (id, name, category, volume, created_at, updated_at)
+  VALUES (@id, @name, @category, @volume, datetime('now'), datetime('now'))
 `);
 
 const mapSpotRow = (row) => ({
@@ -276,19 +174,12 @@ const mapSpotRow = (row) => ({
   gearSelections: JSON.parse(row.gearSelectionsJson || '[]')
 });
 
-/**
- * Remplace toute la table d'un utilisateur dans une transaction atomique.
- * @param {string} table   - nom de la table
- * @param {object} stmt    - prepared statement INSERT
- * @param {Array}  items   - lignes à insérer (doivent contenir userId)
- * @param {string} userId  - UUID de l'utilisateur
- */
-const replaceTableTx = (table, stmt, items, userId) => {
+const replaceTableTx = (deleteSql, insertStmt, items) => {
   db.exec('BEGIN');
   try {
-    db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(userId);
+    db.prepare(deleteSql).run();
     for (const item of items) {
-      stmt.run(item);
+      insertStmt.run(item);
     }
     db.exec('COMMIT');
   } catch (error) {
@@ -297,16 +188,16 @@ const replaceTableTx = (table, stmt, items, userId) => {
   }
 };
 
-const replaceVehiclesTx = (vehicles, userId) => {
-  replaceTableTx('vehicles', insertVehicleStmt, vehicles, userId);
+const replaceVehiclesTx = (vehicles) => {
+  replaceTableTx('DELETE FROM vehicles', insertVehicleStmt, vehicles);
 };
 
-const replaceSpotsTx = (spots, userId) => {
-  replaceTableTx('spots', insertSpotStmt, spots, userId);
+const replaceSpotsTx = (spots) => {
+  replaceTableTx('DELETE FROM spots', insertSpotStmt, spots);
 };
 
-const replaceGearsTx = (gears, userId) => {
-  replaceTableTx('gears', insertGearStmt, gears, userId);
+const replaceGearsTx = (gears) => {
+  replaceTableTx('DELETE FROM gears', insertGearStmt, gears);
 };
 
 // ========================================
@@ -319,7 +210,7 @@ const replaceGearsTx = (gears, userId) => {
  */
 app.get('/api/vehicles', (req, res) => {
   try {
-    const rows = selectVehiclesStmt.all({ userId: req.userId });
+    const rows = selectVehiclesStmt.all();
     const vehicles = rows.map((r) => ({ ...r, isAvailable: r.isAvailable === 1 }));
     return res.json({ success: true, vehicles });
   } catch (error) {
@@ -369,10 +260,9 @@ app.put('/api/vehicles/sync', (req, res) => {
       capacity: v.capacity,
       color: v.color,
       isAvailable: v.isAvailable === false || v.isAvailable === 0 ? 0 : 1,
-      userId: req.userId,
     }));
-    replaceVehiclesTx(dbRows, req.userId);
-    const rows = selectVehiclesStmt.all({ userId: req.userId });
+    replaceVehiclesTx(dbRows);
+    const rows = selectVehiclesStmt.all();
     const persisted = rows.map((r) => ({ ...r, isAvailable: r.isAvailable === 1 }));
     return res.json({ success: true, vehicles: persisted });
   } catch (error) {
@@ -390,7 +280,7 @@ app.put('/api/vehicles/sync', (req, res) => {
  */
 app.get('/api/spots', (req, res) => {
   try {
-    const rows = selectSpotsStmt.all({ userId: req.userId });
+    const rows = selectSpotsStmt.all();
     const spots = rows.map(mapSpotRow);
     return res.json({ success: true, spots });
   } catch (error) {
@@ -423,14 +313,14 @@ app.put('/api/spots/sync', (req, res) => {
     typeof spot.address === 'string' &&
     typeof spot.lat === 'number' &&
     typeof spot.lon === 'number' &&
-    (spot.id === 'depot-permanent' || !(spot.lat === 0 && spot.lon === 0)) &&
+    !(spot.lat === 0 && spot.lon === 0) &&
     typeof spot.openingTime === 'string' &&
     typeof spot.closingTime === 'string' &&
     Array.isArray(spot.gearSelections)
   ));
 
   if (!isValid) {
-    const badSpot = spots.find((s) => s && s.id !== 'depot-permanent' && s.lat === 0 && s.lon === 0);
+    const badSpot = spots.find((s) => s && s.lat === 0 && s.lon === 0);
     const errorMsg = badSpot
       ? `Lieu "${badSpot.name}" non géocodé (lat=0, lon=0). Vérifiez l'adresse.`
       : 'Format lieu invalide';
@@ -453,13 +343,12 @@ app.put('/api/spots/sync', (req, res) => {
       concertDuration: typeof spot.concertDuration === 'number' ? spot.concertDuration : null,
       setupDuration: typeof spot.setupDuration === 'number' ? spot.setupDuration : null,
       teardownDuration: typeof spot.teardownDuration === 'number' ? spot.teardownDuration : null,
-      gearSelectionsJson: JSON.stringify(spot.gearSelections || []),
-      userId: req.userId,
+      gearSelectionsJson: JSON.stringify(spot.gearSelections || [])
     }));
 
-    replaceSpotsTx(dbRows, req.userId);
+    replaceSpotsTx(dbRows);
 
-    const rows = selectSpotsStmt.all({ userId: req.userId });
+    const rows = selectSpotsStmt.all();
     const persisted = rows.map(mapSpotRow);
 
     return res.json({ success: true, spots: persisted });
@@ -478,7 +367,7 @@ app.put('/api/spots/sync', (req, res) => {
  */
 app.get('/api/gears', (req, res) => {
   try {
-    const gears = selectGearsStmt.all({ userId: req.userId });
+    const gears = selectGearsStmt.all();
     return res.json({ success: true, gears });
   } catch (error) {
     console.error('❌ Erreur lecture matériels:', error);
@@ -519,9 +408,8 @@ app.put('/api/gears/sync', (req, res) => {
   }
 
   try {
-    const dbRows = gears.map((g) => ({ ...g, userId: req.userId }));
-    replaceGearsTx(dbRows, req.userId);
-    const persisted = selectGearsStmt.all({ userId: req.userId });
+    replaceGearsTx(gears);
+    const persisted = selectGearsStmt.all();
     return res.json({ success: true, gears: persisted });
   } catch (error) {
     console.error('❌ Erreur sync matériels:', error);
@@ -682,13 +570,13 @@ app.post('/api/optimize/run', (req, res) => {
   // 1. Lire les spots depuis la DB (dépôt inclus grâce à son id 'depot-permanent')
   let spots, vehicles, gears;
   try {
-    const spotRows = selectSpotsStmt.all({ userId: req.userId });
+    const spotRows = selectSpotsStmt.all();
     spots = spotRows.map(mapSpotRow);
 
-    const vehicleRows = selectVehiclesStmt.all({ userId: req.userId });
+    const vehicleRows = selectVehiclesStmt.all();
     vehicles = vehicleRows;
 
-    const gearRows = selectGearsStmt.all({ userId: req.userId });
+    const gearRows = selectGearsStmt.all();
     gears = gearRows;
   } catch (err) {
     console.error('❌ Erreur lecture DB:', err);
@@ -859,10 +747,10 @@ app.post('/api/optimize/run', (req, res) => {
  */
 app.get('/api/optimize/preview', (req, res) => {
   try {
-    const spotRows = selectSpotsStmt.all({ userId: req.userId });
+    const spotRows = selectSpotsStmt.all();
     const spots = spotRows.map(mapSpotRow);
-    const vehicleRows = selectVehiclesStmt.all({ userId: req.userId });
-    const gears = selectGearsStmt.all({ userId: req.userId });
+    const vehicleRows = selectVehiclesStmt.all();
+    const gears = selectGearsStmt.all();
 
     const depot = spots.find((s) => s.id === 'depot-permanent');
     if (!depot) {
@@ -979,10 +867,10 @@ app.get('/api/info', (req, res) => {
  */
 app.get('/api/export/all', (req, res) => {
   try {
-    const spotRows = selectSpotsStmt.all({ userId: req.userId });
+    const spotRows = selectSpotsStmt.all();
     const spots = spotRows.map(mapSpotRow);
-    const vehicles = selectVehiclesStmt.all({ userId: req.userId });
-    const gears = selectGearsStmt.all({ userId: req.userId });
+    const vehicles = selectVehiclesStmt.all();
+    const gears = selectGearsStmt.all();
 
     const gearMap = {};
     for (const g of gears) {
