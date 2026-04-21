@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # Ajoute tes clés API ici ou dans un fichier .env à la racine
+      # - GEOCODE_API_KEY=xxxx
+    volumes:
+      # Bind mount vers le dossier local → le conteneur lit la vraie base SQLite
+      - ./backend/data:/app/data
+    expose:
+      - "5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # VITE_API_URL vide → les appels /api/... sont relatifs, Nginx proxifie
+        VITE_API_URL: ""
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8090:80"   # accessible depuis internet via IP:8090
+    depends_on:
+      - backend
+
