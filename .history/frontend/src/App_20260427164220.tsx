@@ -8,19 +8,6 @@ import { fetchVehicles, syncVehicles } from './utils/vehicles-api';
 import { fetchSpots, syncSpots } from './utils/spots-api';
 import { fetchGears, syncGears } from './utils/gears-api';
 
-// ✅ DEPOT_SPOT garde son id fixe — valeurs viennent de la DB au chargement
-const DEPOT_SPOT: Spot = {
-  id: 'depot-permanent',
-  name: 'Dépôt',
-  address: '',
-  lat: 0,
-  lon: 0,
-  openingTime: '08:00',
-  closingTime: '23:00',
-  gearSelections: [],
-};
-
-// ✅ SUPPRIMÉ : DEFAULT_VEHICLES hardcodé
 
 const USER_SPOTS_KEY = 'regietour_spots';
 
@@ -396,7 +383,7 @@ export default function App() {
             <div className="flex items-center gap-2 min-w-0">
               <Truck className="w-8 h-8 sm:w-14 sm:h-14 text-blue-600 flex-shrink-0" />
               <div className="min-w-0">
-                <h1 className="text-sm sm:text-2xl font-bold text-gray-900 leading-tight truncate">InTheFlow</h1>
+                <h1 className="text-sm sm:text-2xl font-bold text-gray-900 leading-tight truncate">RegieTour</h1>
                 <p className="text-[10px] sm:text-xs text-gray-600 pt-0.5 truncate">Optimisateur de tournées événementielles</p>
               </div>
             </div>
