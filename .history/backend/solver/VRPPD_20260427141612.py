@@ -31,9 +31,9 @@ MARGIN_BEFORE_CLOSING  = 30   # cannot arrive too close to closing time
 # ── Modes d'optimisation (facilement modifiables) ────────────────────────────
 MODE_PRESETS = {
     "equilibre":          {"alpha_time": 0.4, "alpha_distance": 0.3, "alpha_load": 0.3},
-    "economie_vehicules": {"alpha_time": 0.2, "alpha_distance": 0.3, "alpha_load": 0.6},
-    "rapidite":           {"alpha_time": 0.6, "alpha_distance": 0.2, "alpha_load": 0.2},
-    "distance_min":       {"alpha_time": 0.2, "alpha_distance": 0.6, "alpha_load": 0.2},
+    "economie_vehicules": {"alpha_time": 0.3, "alpha_distance": 0.3, "alpha_load": 0.5},
+    "rapidite":           {"alpha_time": 0.5, "alpha_distance": 0.3, "alpha_load": 0.2},
+    "distance_min":       {"alpha_time": 0.3, "alpha_distance": 0.5, "alpha_load": 0.2},
 }
 
 MODE_LABELS = {

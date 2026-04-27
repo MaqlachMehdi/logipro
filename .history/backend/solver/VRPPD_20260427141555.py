@@ -31,9 +31,9 @@ MARGIN_BEFORE_CLOSING  = 30   # cannot arrive too close to closing time
 # ── Modes d'optimisation (facilement modifiables) ────────────────────────────
 MODE_PRESETS = {
     "equilibre":          {"alpha_time": 0.4, "alpha_distance": 0.3, "alpha_load": 0.3},
-    "economie_vehicules": {"alpha_time": 0.2, "alpha_distance": 0.3, "alpha_load": 0.6},
-    "rapidite":           {"alpha_time": 0.6, "alpha_distance": 0.2, "alpha_load": 0.2},
-    "distance_min":       {"alpha_time": 0.2, "alpha_distance": 0.6, "alpha_load": 0.2},
+    "economie_vehicules": {"alpha_time": 0.3, "alpha_distance": 0.3, "alpha_load": 0.5},
+    "rapidite":           {"alpha_time": 0.5, "alpha_distance": 0.3, "alpha_load": 0.2},
+    "distance_min":       {"alpha_time": 0.3, "alpha_distance": 0.5, "alpha_load": 0.2},
 }
 
 MODE_LABELS = {
@@ -507,16 +507,19 @@ if __name__ == "__main__":
         # loss_function = BaselineLoss(alpha_time=1.0, alpha_distance=1.0, alpha_load=1.0)
         # loss_function = MinTheMaxUseTime()
 
-        requested_mode = data.get('config', 'equilibre')
-        _, coeffs, _ = resolve_mode_config(requested_mode)
-        loss_function = MixedUsedTotalDistAndTime(**coeffs)
+        alpha_time          = 0.0
+        """loss_function       = MixedUsedTimeAndTotalDist(
+            alpha_time=alpha_time,
+            alpha_distance=0,
+            alpha_load=1-alpha_time,
+            )
 
-        time_margin = TimeMargin(
-            before_concert=MARGIN_BEFORE_CONCERT,
-            after_concert=MARGIN_AFTER_CONCERT,
-            before_closing=MARGIN_BEFORE_CLOSING
-        )
-        problem = build_problem(data, loss_function, time_margin, recall_api=RECALL_MAP_API)
+        loss_function = MinTheMaxUseTime()"""
+
+        loss_function = MixedUsedTotalDistAndTime(alpha_time=0.5, alpha_distance=0.3, alpha_load=0.2)
+
+        time_margin         = TimeMargin(before_concert=MARGIN_BEFORE_CONCERT, after_concert=MARGIN_AFTER_CONCERT, before_closing=MARGIN_BEFORE_CLOSING)
+        problem             = build_problem(data, loss_function, time_margin, recall_api=RECALL_MAP_API)
 
         if not args.verbose:
             print(problem)

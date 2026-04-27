@@ -21,13 +21,13 @@ interface RouteSummaryProps {
   onSolutionChange?: (solution: VRPSolution | null) => void;
 }
 
-type ConfigType = 'equilibre' | 'economie' | 'rapidite' | 'distance';
+type ConfigType = 'equilibre' | 'economie_vehicules' | 'rapidite' | 'distance_min';
 
 const CONFIGURATIONS: Record<ConfigType, { label: string; description: string }> = {
-  equilibre: { label: 'Équilibré', description: 'Bon compromis' },
-  economie: { label: 'Économie Véhicules', description: 'Minimiser véhicules' },
-  rapidite: { label: 'Rapidité', description: 'Minimiser temps' },
-  distance: { label: 'Distance Min', description: 'Minimiser km' }
+  equilibre:          { label: 'Équilibré',          description: 'Bon compromis' },
+  economie_vehicules: { label: 'Économie Véhicules', description: 'Minimiser véhicules' },
+  rapidite:           { label: 'Rapidité',           description: 'Minimiser temps' },
+  distance_min:       { label: 'Distance Min',       description: 'Minimiser km' },
 };
 
 
