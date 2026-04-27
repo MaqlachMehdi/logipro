@@ -20,7 +20,10 @@ services:
         VITE_API_URL: ""
     restart: unless-stopped
     ports:
-      - "0.0.0.0:8090:80"   # accessible depuis internet via IP:8090
+      - "0.0.0.0:80:80"     # HTTP → redirigé vers HTTPS par nginx
+      - "0.0.0.0:443:443"   # HTTPS
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # certificats SSL Let's Encrypt
     depends_on:
       - backend
 
