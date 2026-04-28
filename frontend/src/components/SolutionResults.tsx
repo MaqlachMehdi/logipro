@@ -5,25 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui';
 import { CalendarClock, Clock, MapPin, Navigation, TrendingUp, X, Printer, ArrowUp, ArrowDown } from 'lucide-react';
 import { getVehicleColor, hexToRgba, type VehicleColor } from '../config/vehicle-colors';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
-
-const downloadPdf = async () => {
-  const res = await fetch(`${API_URL}/api/solution/pdf`, { credentials: 'include' });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Erreur inconnue' }));
-    alert(`Impossible de générer le PDF : ${err.error ?? err}`);
-    return;
-  }
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'resume_tournee.pdf';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-};
 
 
 const minToHHMM = (min: number): string => {
@@ -117,6 +98,116 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
     return () => clearTimeout(timer);
   }, [solution]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleDownloadPdf = () => {
+    if (!solution) return;
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    const actionLabel: Record<string, string> = {
+      Departure: 'Départ dépôt', Return: 'Retour dépôt',
+      Delivery: 'Livraison', Recovery: 'Ramassage',
+    };
+
+    const vehicleRows = solution.details_vehicules.map((v) => {
+      const stopRows = (v.arrets ?? []).map((a) => `
+        <tr>
+          <td>${a.arrival_time != null ? minToHHMM(a.arrival_time) : '—'}</td>
+          <td>${actionLabel[a.action] ?? a.action}</td>
+          <td><strong>${a.label}</strong>${a.address ? `<br><small style="color:#666">${a.address}</small>` : ''}</td>
+          <td>${a.travel_time_from_prev != null ? `${a.travel_time_from_prev.toFixed(0)} min` : '—'}</td>
+          <td>${a.distance_from_prev != null ? `${a.distance_from_prev.toFixed(1)} km` : '—'}</td>
+        </tr>`).join('');
+      return `
+        <div class="vehicle-block">
+          <div class="vehicle-header">${v.nom} — ${v.destinations.length} arrêt${v.destinations.length > 1 ? 's' : ''} · ${v.temps_min.toFixed(0)} min · ${v.distance_km.toFixed(1)} km</div>
+          <table>
+            <thead><tr><th>Heure</th><th>Action</th><th>Lieu</th><th>Trajet</th><th>Distance</th></tr></thead>
+            <tbody>${stopRows}</tbody>
+          </table>
+        </div>`;
+    }).join('');
+
+    const concertList = [...spots]
+      .filter((s) => s.id !== 'depot-permanent')
+      .sort((a, b) => (a.concertTime ?? '').localeCompare(b.concertTime ?? ''))
+      .map((spot, i) => {
+        const instruments = spot.gearSelections
+          .filter((sel) => sel.quantity > 0)
+          .map((sel) => `${sel.quantity}× ${gears.find((g) => g.id === sel.gearId)?.name ?? sel.gearId}`)
+          .join(', ');
+        return `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${spot.name}</td>
+            <td>${spot.concertTime ?? '—'}</td>
+            <td>${spot.concertDuration ? spot.concertDuration + ' min' : '—'}</td>
+            <td>${spot.setupDuration ? spot.setupDuration + ' min' : '—'}</td>
+            <td>${spot.teardownDuration ? spot.teardownDuration + ' min' : '—'}</td>
+            <td>${instruments || '—'}</td>
+          </tr>`;
+      }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InTheFlow – Résumé de tournée</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,sans-serif;font-size:13px;color:#111;padding:24px;max-width:900px;margin:0 auto}
+    h1{font-size:20px;font-weight:700;color:#1d4ed8;margin-bottom:4px}
+    .subtitle{color:#6b7280;font-size:12px;margin-bottom:20px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .stat-box{border:1px solid #e5e7eb;border-radius:8px;padding:12px;text-align:center}
+    .stat-value{font-size:18px;font-weight:700;color:#1d4ed8}
+    .stat-label{font-size:11px;color:#6b7280;margin-top:2px}
+    h2{font-size:15px;font-weight:700;margin:24px 0 12px;color:#111;border-bottom:2px solid #e5e7eb;padding-bottom:6px}
+    .vehicle-block{margin-bottom:20px}
+    .vehicle-header{background:#1d4ed8;color:white;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:600;font-size:13px}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th{background:#f3f4f6;padding:6px 8px;text-align:left;font-weight:600;color:#374151;border:1px solid #e5e7eb}
+    td{padding:6px 8px;border:1px solid #e5e7eb;vertical-align:top}
+    tr:nth-child(even) td{background:#f9fafb}
+    .footer{margin-top:32px;text-align:center;color:#9ca3af;font-size:11px}
+    .btn-print{display:block;margin:0 auto 24px;padding:10px 24px;background:#1d4ed8;color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer}
+    @media print{.btn-print{display:none} body{padding:0} @page{margin:1cm}}
+  </style>
+</head>
+<body>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
+  <h1>InTheFlow – Résumé de tournée</h1>
+  <p class="subtitle">${solution.label} · Généré le ${today}</p>
+  <div class="stats-grid">
+    <div class="stat-box"><div class="stat-value">${solution.nb_vehicules}</div><div class="stat-label">Véhicules</div></div>
+    <div class="stat-box"><div class="stat-value">${spots.filter(s => s.id !== 'depot-permanent').length}</div><div class="stat-label">Concerts</div></div>
+    <div class="stat-box"><div class="stat-value">${solution.temps_total_min.toFixed(0)} min</div><div class="stat-label">Temps total</div></div>
+    <div class="stat-box"><div class="stat-value">${solution.distance_totale_km.toFixed(1)} km</div><div class="stat-label">Distance</div></div>
+  </div>
+  <h2>Tournées par véhicule</h2>
+  ${vehicleRows}
+  <h2>Concerts</h2>
+  <table>
+    <thead><tr><th>#</th><th>Lieu</th><th>Heure</th><th>Durée</th><th>Montage</th><th>Démontage</th><th>Instruments</th></tr></thead>
+    <tbody>${concertList}</tbody>
+  </table>
+  <p class="footer">InTheFlow · intheflow.site</p>
+</body>
+</html>`;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Veuillez autoriser les popups pour générer le résumé.');
+      return;
+    }
+    printWindow.document.write(html);
+    printWindow.document.close();
+    if (!isIOS) {
+      setTimeout(() => printWindow.print(), 600);
+    }
+  };
+
   if (!solution) return null;
 
   const availableVehicles = vehicles.filter((vehicle) => vehicle.isAvailable !== false);
@@ -172,7 +263,7 @@ export function SolutionResults({ solution, vehicles, spots, gears, onSelectMapV
               Résultat d'optimisation
             </CardTitle>
             <button
-              onClick={downloadPdf}
+              onClick={handleDownloadPdf}
               className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
               title="Télécharger le résumé en PDF"
             >
