@@ -129,35 +129,24 @@ Travel times and distances are fetched from a public OSRM instance using real ro
 
 ## Infrastructure
 
-```
-VPS (Ubuntu 22.04)
-├── Docker Compose
-│   ├── frontend  (nginx:alpine)  → :80, :443
-│   └── backend   (node:22-slim)  → internal :5000
-├── /etc/letsencrypt/             → mounted read-only into frontend container
-└── backend/data/logipro.db       → mounted as bind volume (persisted on host)
-```
+The application is fully containerized with **Docker Compose** — two services (frontend static server, backend API) behind an **Nginx** reverse proxy handling TLS termination. TLS certificates are managed automatically via **Let's Encrypt**.
 
-**Deployment** is git-based: `git push` to the main branch, then `docker compose up -d --build` on the VPS rebuilds only the changed layers. The SQLite database is excluded from version control via `git update-index --skip-worktree` and persists across deploys via a Docker bind mount.
+**Deployment** is git-based: pushing to the main branch triggers a container rebuild on the production server. Only changed Docker layers are rebuilt. The database is excluded from version control and persists across deploys via a Docker bind mount on the host.
 
 ---
 
 ## Local Development
 
-**Prerequisites:** Node.js 20+, Python 3.11+, Docker
+**Prerequisites:** Node.js, Python 3.11+, Docker
 
 ```bash
 # Frontend
-cd frontend
-npm install
-npm run dev          # Vite dev server on :5173
+cd frontend && npm install && npm run dev
 
 # Backend
-cd backend
-npm install
-node server.js       # Express on :5000
+cd backend && npm install && node server.js
 
-# Solver (standalone test)
+# Solver (standalone)
 cd backend/solver
 python -m venv .venv && .venv/bin/pip install -r requirements.txt
 echo '{"locations":[...],"vehicles":[...],"config":"equilibre"}' | python VRPPD.py --api
