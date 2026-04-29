@@ -8,10 +8,17 @@ const { DatabaseSync } = require('node:sqlite');
 const { randomUUID } = require('crypto');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
+// En production, ALLOWED_ORIGIN doit être défini via variable d'environnement.
+// En dev local, on accepte localhost par défaut.
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
 
 // Middleware
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: ALLOWED_ORIGIN,
+  credentials: true,
+}));
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb' }));

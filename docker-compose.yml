@@ -4,6 +4,8 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      # Origine autorisée pour les requêtes CORS (doit correspondre à ton domaine)
+      - ALLOWED_ORIGIN=https://intheflow.site
     volumes:
       # Bind mount vers le dossier local → le conteneur lit la vraie base SQLite
       - ./backend/data:/app/data
