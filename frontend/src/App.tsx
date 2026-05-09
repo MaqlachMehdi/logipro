@@ -124,7 +124,6 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lon: numb
   try {
     const res = await fetch(`${API_URL}/api/geocode`, {
       method: 'POST',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ address: address.trim() }),
     });
@@ -396,7 +395,7 @@ export default function App() {
             <div className="flex items-center gap-2 min-w-0">
               <Truck className="w-8 h-8 sm:w-14 sm:h-14 text-blue-600 flex-shrink-0" />
               <div className="min-w-0">
-                <h1 className="text-sm sm:text-2xl font-bold text-gray-900 leading-tight truncate">InTheFlow</h1>
+                <h1 className="text-sm sm:text-2xl font-bold text-gray-900 leading-tight truncate">RegieTour</h1>
                 <p className="text-[10px] sm:text-xs text-gray-600 pt-0.5 truncate">Optimisateur de tournées événementielles</p>
               </div>
             </div>

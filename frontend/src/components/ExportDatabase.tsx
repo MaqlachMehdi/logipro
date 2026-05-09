@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 export function ExportDatabase() {
   const [loading, setLoading] = useState(false);
-  const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   /**
    * Appelle GET /api/export/all → télécharge base_complete.csv
@@ -13,7 +13,7 @@ export function ExportDatabase() {
   const handleExportDatabaseCSV = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/export/all`, { credentials: 'include' });
+      const response = await fetch(`${API_URL}/api/export/all`);
       if (!response.ok) throw new Error(`Erreur ${response.status}`);
 
       const blob = await response.blob();
